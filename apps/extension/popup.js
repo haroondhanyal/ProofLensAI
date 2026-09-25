@@ -3,6 +3,7 @@ const address = document.getElementById('page-address');
 const status = document.getElementById('status');
 const checkPage = document.getElementById('check-page');
 const checkSelection = document.getElementById('check-selection');
+const { cleanSubmittedUrl, handoffUrl, MAX_TEXT_LENGTH } = globalThis.ProofLensExtension;
 
 async function currentTab() {
   const [tab] = await extensionApi.tabs.query({ active: true, currentWindow: true });
@@ -23,18 +24,20 @@ async function selectedText(tabId) {
 
 async function init() {
   const tab = await currentTab();
-  if (!tab?.id || !tab.url || !/^https?:/i.test(tab.url)) {
+  const pageUrl = tab?.url ? cleanSubmittedUrl(tab.url) : null;
+  if (!tab?.id || !pageUrl) {
     address.textContent = 'This browser page cannot be checked.';
     checkPage.disabled = true;
     checkSelection.disabled = true;
     status.textContent = 'Open a regular website tab to use ProofLens.';
     return;
   }
-  address.textContent = new URL(tab.url).hostname;
+  address.textContent = new URL(pageUrl).hostname;
+  address.title = 'Authentication query parameters, URL fragments, and embedded credentials are removed before handoff.';
   const selection = await selectedText(tab.id);
   checkSelection.disabled = !selection;
-  checkPage.addEventListener('click', () => void send({ kind: 'url', value: tab.url }));
-  checkSelection.addEventListener('click', () => void send({ kind: 'text', value: selection }));
+  checkPage.addEventListener('click', () => void send({ kind: 'url', value: pageUrl }));
+  checkSelection.addEventListener('click', () => void send({ kind: 'text', value: selection.slice(0, MAX_TEXT_LENGTH) }));
 }
 
 async function send(request) {
@@ -43,16 +46,7 @@ async function send(request) {
   status.textContent = 'Opening your ProofLens workspace…';
   try {
     const settings = await extensionApi.storage.local.get({ webAppUrl: 'http://localhost:3000' });
-    let base = 'http://localhost:3000';
-    try {
-      const parsed = new URL(settings.webAppUrl);
-      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') base = parsed.origin;
-    } catch {
-      // Fall back to the local development app.
-    }
-    const target = new URL(base);
-    target.hash = `prooflens=${encodeURIComponent(JSON.stringify({ kind: request.kind, value: request.value.slice(0, 12000) }))}`;
-    await extensionApi.tabs.create({ url: target.toString() });
+    await extensionApi.tabs.create({ url: handoffUrl(settings.webAppUrl, request) });
     window.close();
   } catch {
     status.textContent = 'Could not open ProofLens. Check the workspace address in settings.';

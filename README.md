@@ -44,6 +44,8 @@ Open http://localhost:3000. On the sign-in screen, **Explore sample workspace** 
 - Optional local AI explanations through Ollama. AI advice is separate from evidence and does not set risk scores.
 - Browser extension source in [`apps/extension/`](apps/extension/README.md).
 
+Build the Chrome/Edge and Firefox browser extension packages with `npm run build:extension`, then follow the [extension setup instructions](apps/extension/README.md).
+
 Optional integrations such as ClamAV, YARA, Google Web Risk, fact checks, and media analysis are described in [`docs/phase2-integrations.md`](docs/phase2-integrations.md). Provider keys and local services are not required for the sample workspace.
 
 ## Checks

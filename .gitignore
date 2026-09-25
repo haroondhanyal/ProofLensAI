@@ -16,5 +16,6 @@ playwright-report/
 test-results/
 apps/web/playwright-report/
 apps/web/test-results/
+apps/extension/dist/
 backend/uploads/
 .DS_Store

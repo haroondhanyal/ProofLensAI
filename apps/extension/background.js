@@ -1,4 +1,7 @@
+importScripts('shared.js');
+
 const extensionApi = globalThis.browser ?? globalThis.chrome;
+const { cleanSubmittedUrl, handoffUrl } = globalThis.ProofLensExtension;
 const MENU_PAGE = 'prooflens-check-page';
 const MENU_LINK = 'prooflens-check-link';
 const MENU_TEXT = 'prooflens-check-text';
@@ -15,29 +18,17 @@ extensionApi.runtime.onInstalled.addListener(() => {
 
 extensionApi.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === MENU_LINK && info.linkUrl) {
-    void openProofLens({ kind: 'url', value: info.linkUrl });
+    const value = cleanSubmittedUrl(info.linkUrl);
+    if (value) void openProofLens({ kind: 'url', value });
   } else if (info.menuItemId === MENU_TEXT && info.selectionText) {
     void openProofLens({ kind: 'text', value: info.selectionText });
   } else if (info.menuItemId === MENU_PAGE && tab?.url) {
-    void openProofLens({ kind: 'url', value: tab.url });
+    const value = cleanSubmittedUrl(tab.url);
+    if (value) void openProofLens({ kind: 'url', value });
   }
 });
 
 async function openProofLens(request) {
-  const value = request.value.slice(0, 12000);
   const settings = await extensionApi.storage.local.get({ webAppUrl: 'http://localhost:3000' });
-  const base = validateWebAppUrl(settings.webAppUrl);
-  const target = new URL(base);
-  target.hash = `prooflens=${encodeURIComponent(JSON.stringify({ kind: request.kind, value }))}`;
-  await extensionApi.tabs.create({ url: target.toString() });
-}
-
-function validateWebAppUrl(value) {
-  try {
-    const parsed = new URL(value);
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.origin;
-  } catch {
-    // Use the local development app when the saved address is invalid.
-  }
-  return 'http://localhost:3000';
+  await extensionApi.tabs.create({ url: handoffUrl(settings.webAppUrl, request) });
 }

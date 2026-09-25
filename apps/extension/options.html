@@ -15,8 +15,9 @@
       <input id="web-app-url" type="url" inputmode="url" placeholder="http://localhost:3000" autocomplete="url">
       <button id="save">Save workspace</button>
       <p id="status" role="status" aria-live="polite"></p>
-      <aside>Selected page text is handed to the ProofLens web app in a URL fragment. It is removed from the address bar as soon as the app loads.</aside>
+      <aside>Only a check you start is handed to the ProofLens web app. Page URLs have credentials, fragments, and common authentication parameters removed. Selected text is capped at 12,000 characters. The handoff is placed in a URL fragment, which the app removes on load.</aside>
     </main>
+    <script src="shared.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

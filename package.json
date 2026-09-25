@@ -7,6 +7,7 @@
   "scripts": {
     "dev:web": "npm run dev --workspace=prooflens-web",
     "build:web": "npm run build --workspace=prooflens-web",
+    "build:extension": "node apps/extension/scripts/build.mjs",
     "lint": "npm run lint --workspace=prooflens-web",
     "test:backend": "cd backend && python -m pytest",
     "test:e2e": "npm run test:e2e --workspace=prooflens-web",
