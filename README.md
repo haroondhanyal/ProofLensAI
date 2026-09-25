@@ -1,6 +1,6 @@
 # ProofLens AI — Mobile App
 
-The standalone Expo and React Native client for ProofLens AI. This project is maintained separately from the web/API project on the `mobile-app` Git branch. Its screens use the same ProofLens API; the backend and web app are documented on the `main` branch.
+The standalone Expo and React Native client for ProofLens AI. This project is maintained on the `mobile-app` Git branch. It calls the ProofLens API maintained with the web app on the [`main` branch](https://github.com/haroondhanyal/ProofLensAI/tree/main).
 
 ## What the app includes
 
@@ -18,11 +18,13 @@ The standalone Expo and React Native client for ProofLens AI. This project is ma
 
 ## Implementation status
 
-The mobile client now covers the planned app workflows and calls the shared ProofLens API for live account, analyzer, report, and privacy actions. Before a public release, point it at the deployed HTTPS API, apply the backend Alembic migrations, create signed Android/iOS builds using the publisher's credentials, and complete physical-device and store review. These account/device release steps are separate from the app code.
+The app implementation includes the mobile account, scan, report, sharing, history, and privacy workflows listed above. Current code checks pass: Expo lint, TypeScript typecheck, and Android/iOS JavaScript bundle export.
+
+The app is **not yet a published or device-verified release**. Before release, configure a reachable HTTPS API, apply the backend migrations, verify camera and OS sharing on physical iOS and Android devices, create signed production builds, and complete store review. Production builds require the publisher's Expo, Apple, and Google Play credentials.
 
 ## Requirements
 
-- Node.js 22.13+ or 24.3+
+- Node.js `^22.13.0`, `^24.3.0`, or `>=25.0.0` (matches `package.json`)
 - npm
 - Expo Go for compatible preview workflows
 - Android Studio/Android SDK for Android simulator or device builds
@@ -30,6 +32,8 @@ The mobile client now covers the planned app workflows and calls the shared Proo
 - A reachable ProofLens API backend for sign-in and live analysis
 
 ## Configure the API address
+
+The API server is in the web project on `main`; this branch contains only the mobile app. For local development, start the backend from a separate `main` checkout using the web README's backend steps. Run `alembic upgrade head` before testing scan-retention settings.
 
 Create a local environment file in the project root:
 
@@ -85,9 +89,7 @@ npm run build:ios:simulator
 npm run build:production
 ```
 
-Production iOS distribution requires Apple Developer signing credentials; Google Play publication requires the publisher's Play Console account and signing setup. EAS can guide credential creation, but those accounts and store approvals belong to the publisher.
-
-Production signing and distribution need EAS Build configuration plus Apple Developer and Google Play accounts. Store listing review, account ownership, and release QA remain publishing steps. Production API traffic must use HTTPS; HTTP addresses are for local development on a trusted network.
+Production iOS distribution requires Apple Developer signing credentials; Google Play publication requires the publisher's Play Console account and signing setup. EAS can guide credential creation, but those accounts and store approvals belong to the publisher. Production API traffic must use HTTPS; HTTP addresses are for local development on a trusted network.
 
 ## Project structure
 
