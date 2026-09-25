@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ProofLens workspace settings</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <span class="eyebrow">PROOFLENS AI · BROWSER EXTENSION</span>
+      <h1>Workspace address</h1>
+      <p>Choose the web app that receives checks from this extension. The web app signs you in and sends the analysis to its configured ProofLens API.</p>
+      <label for="web-app-url">ProofLens web app URL</label>
+      <input id="web-app-url" type="url" inputmode="url" placeholder="http://localhost:3000" autocomplete="url">
+      <button id="save">Save workspace</button>
+      <p id="status" role="status" aria-live="polite"></p>
+      <aside>Selected page text is handed to the ProofLens web app in a URL fragment. It is removed from the address bar as soon as the app loads.</aside>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

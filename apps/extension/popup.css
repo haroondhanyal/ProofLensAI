@@ -1,0 +1,19 @@
+:root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #12231f; background: #f7faf9; }
+* { box-sizing: border-box; }
+body { width: 320px; margin: 0; }
+main { padding: 18px; }
+header { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
+header div { display: grid; gap: 2px; }
+header b { font-size: 15px; letter-spacing: -.02em; }
+header small { color: #63746e; font-size: 11px; }
+.mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; color: #fff; background: #087f67; font-size: 18px; font-weight: 800; }
+.page-address { overflow: hidden; margin: 0 0 9px; color: #64766f; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+button { width: 100%; min-height: 42px; padding: 0 12px; border: 0; border-radius: 10px; font: inherit; font-size: 12px; font-weight: 700; text-align: left; cursor: pointer; }
+button span { float: right; font-size: 15px; }
+.primary { color: white; background: #087f67; }
+.primary:hover { background: #066b57; }
+.secondary { margin-top: 8px; color: #16352c; background: #e7f2ef; }
+.secondary:disabled { color: #87948f; cursor: not-allowed; background: #edf1ef; }
+.status { min-height: 30px; margin: 12px 1px 4px; color: #63746e; font-size: 11px; line-height: 1.45; }
+footer { display: flex; justify-content: flex-end; border-top: 1px solid #e2eae7; padding-top: 9px; }
+footer button { width: auto; min-height: 28px; padding: 0 2px; color: #087f67; background: transparent; font-size: 11px; }

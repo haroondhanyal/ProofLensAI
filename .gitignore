@@ -1,0 +1,20 @@
+.env
+.env.*
+!.env.example
+!Mobile APP/.env.mobile.example
+node_modules/
+*.tsbuildinfo
+.next/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.db
+coverage/
+playwright-report/
+test-results/
+apps/web/playwright-report/
+apps/web/test-results/
+backend/uploads/
+.DS_Store

@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "ProofLens AI — Check Before You Trust",
+  "version": "0.1.0",
+  "description": "Send a page, link, or selected text to your ProofLens workspace for an evidence based check.",
+  "minimum_chrome_version": "121",
+  "permissions": ["activeTab", "contextMenus", "storage", "scripting"],
+  "action": {
+    "default_title": "Check with ProofLens",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "options_page": "options.html",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "prooflens-ai@prooflens.local",
+      "strict_min_version": "121.0"
+    }
+  }
+}

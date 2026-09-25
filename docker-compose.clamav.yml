@@ -1,0 +1,19 @@
+services:
+  clamav:
+    image: clamav/clamav:stable-debian13-slim
+    container_name: prooflens-clamav
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3310:3310"
+    volumes:
+      - clamav-signatures:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping=1 --no-summary || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 3m
+    mem_limit: 2g
+
+volumes:
+  clamav-signatures:

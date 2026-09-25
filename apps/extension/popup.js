@@ -1,0 +1,65 @@
+const extensionApi = globalThis.browser ?? globalThis.chrome;
+const address = document.getElementById('page-address');
+const status = document.getElementById('status');
+const checkPage = document.getElementById('check-page');
+const checkSelection = document.getElementById('check-selection');
+
+async function currentTab() {
+  const [tab] = await extensionApi.tabs.query({ active: true, currentWindow: true });
+  return tab;
+}
+
+async function selectedText(tabId) {
+  try {
+    const results = await extensionApi.scripting.executeScript({
+      target: { tabId },
+      func: () => window.getSelection()?.toString().trim().slice(0, 12000) ?? ''
+    });
+    return results?.[0]?.result ?? '';
+  } catch {
+    return '';
+  }
+}
+
+async function init() {
+  const tab = await currentTab();
+  if (!tab?.id || !tab.url || !/^https?:/i.test(tab.url)) {
+    address.textContent = 'This browser page cannot be checked.';
+    checkPage.disabled = true;
+    checkSelection.disabled = true;
+    status.textContent = 'Open a regular website tab to use ProofLens.';
+    return;
+  }
+  address.textContent = new URL(tab.url).hostname;
+  const selection = await selectedText(tab.id);
+  checkSelection.disabled = !selection;
+  checkPage.addEventListener('click', () => void send({ kind: 'url', value: tab.url }));
+  checkSelection.addEventListener('click', () => void send({ kind: 'text', value: selection }));
+}
+
+async function send(request) {
+  checkPage.disabled = true;
+  checkSelection.disabled = true;
+  status.textContent = 'Opening your ProofLens workspace…';
+  try {
+    const settings = await extensionApi.storage.local.get({ webAppUrl: 'http://localhost:3000' });
+    let base = 'http://localhost:3000';
+    try {
+      const parsed = new URL(settings.webAppUrl);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') base = parsed.origin;
+    } catch {
+      // Fall back to the local development app.
+    }
+    const target = new URL(base);
+    target.hash = `prooflens=${encodeURIComponent(JSON.stringify({ kind: request.kind, value: request.value.slice(0, 12000) }))}`;
+    await extensionApi.tabs.create({ url: target.toString() });
+    window.close();
+  } catch {
+    status.textContent = 'Could not open ProofLens. Check the workspace address in settings.';
+    checkPage.disabled = false;
+    checkSelection.disabled = false;
+  }
+}
+
+document.getElementById('settings').addEventListener('click', () => extensionApi.runtime.openOptionsPage());
+void init();
