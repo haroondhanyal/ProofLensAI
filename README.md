@@ -6,9 +6,11 @@ This is the web project branch (`main`). It contains the Next.js web app, FastAP
 
 ## Web app features
 
+- Public marketing homepage with quick-check entry points, a four-step product explanation, FAQ, and clear privacy notes.
 - Account registration, sign-in, password reset, profile/password settings, and selectable themes.
-- An authenticated workspace with dashboard, analyzer, scan history, and evidence reports.
+- An authenticated workspace with real-data safety metrics, analyzer, scan history, reports, saved checks, Help, Privacy, and account settings.
 - Checks for URLs, messages, screenshots, QR codes, images, files, stores, products, and claims.
+- A Threat Center with practical scam-prevention guides. This is educational content, not a live threat feed.
 - Optional local AI explanations through Ollama. AI advice is identified separately and does not set evidence or risk scores.
 - A browser extension for Chrome, Edge, and Firefox that hands a user-selected page, link, or text to the web workspace.
 - Fictional, read-only sample reports through **Explore sample workspace** on the sign-in screen.
@@ -67,6 +69,12 @@ The API provides session authentication, scan endpoints, history, private report
 - [`docs/risk-engine.md`](docs/risk-engine.md) — evidence and risk scoring.
 - [`docs/security.md`](docs/security.md) — security model and data handling.
 - [`apps/extension/README.md`](apps/extension/README.md) — browser package setup.
+
+## Scope that remains future work
+
+- Live/community threat alerts and an administrator threat-monitoring console.
+- Video and audio analysis, social sign-in, push/email notifications, and user-configurable scan-retention controls.
+- Public browser-store releases; the extension packages are currently for local development and review.
 
 ## Developer commands
 
