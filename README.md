@@ -6,12 +6,19 @@ The standalone Expo and React Native client for ProofLens AI. This project is ma
 
 - Sign in, account registration, country-code phone input, forgot-password, and reset-password screens.
 - A signed-in workspace with overview, analyzer, scan history, account settings, password update, and theme selection.
+- Native sign-in/register sessions with rotating refresh tokens stored in iOS Keychain or Android Keystore-backed storage; logout revokes the server session.
 - Scan entry points for links, messages, screenshots, QR codes, images, files, stores, products, and claims, backed by the shared API.
 - Evidence-based reports with risk level, score, confidence, findings, and recommended action.
 - Optional local-AI availability and explanations returned by the backend. AI advice is shown separately and does not change evidence or risk scores.
 - QR scanning through the device camera, image selection, private report links, and PDF report export/share.
-- Incoming OS shares for text, web links, and images. The app previews the shared content and waits for the user to choose **Analyze shared content**.
+- Incoming OS shares for text, web links, and images. The app previews the shared content and waits for the user to choose **Analyze shared content**. If the user needs to sign in first, the pending share stays available and the app returns to it after login or registration.
 - Fictional sample scans for preview; samples are labeled and cannot be shared as live reports.
+- Scan-history search and filters, save/unsave, delete, private-share creation/revocation, and PDF export.
+- Account privacy settings for scan retention and a password-confirmed account deletion flow.
+
+## Implementation status
+
+The mobile client now covers the planned app workflows and calls the shared ProofLens API for live account, analyzer, report, and privacy actions. Before a public release, point it at the deployed HTTPS API, apply the backend Alembic migrations, create signed Android/iOS builds using the publisher's credentials, and complete physical-device and store review. These account/device release steps are separate from the app code.
 
 ## Requirements
 
@@ -68,6 +75,20 @@ npm run ios
 
 `npm run ios` requires macOS with Xcode. Follow Expo's prompts for native project generation. Do not commit generated platform build folders unless the team intentionally adopts a native-project workflow.
 
+## EAS build profiles
+
+`eas.json` includes internal preview profiles (Android APK and iOS simulator) and a production profile (Android App Bundle and iOS device archive). Sign in to an Expo account, set `EXPO_PUBLIC_API_URL` in the EAS environment to the deployed HTTPS API URL, then run:
+
+```sh
+npm run build:android:preview
+npm run build:ios:simulator
+npm run build:production
+```
+
+Production iOS distribution requires Apple Developer signing credentials; Google Play publication requires the publisher's Play Console account and signing setup. EAS can guide credential creation, but those accounts and store approvals belong to the publisher.
+
+Production signing and distribution need EAS Build configuration plus Apple Developer and Google Play accounts. Store listing review, account ownership, and release QA remain publishing steps. Production API traffic must use HTTPS; HTTP addresses are for local development on a trusted network.
+
 ## Project structure
 
 ```text
@@ -98,4 +119,4 @@ npx expo-doctor
 
 ## Data handling and limitations
 
-Live scan content is sent to the configured ProofLens API and handled under that server's settings and provider configuration. Review those settings before analyzing sensitive content. No scan runs just because a link or file was shared into the app; the user reviews it and starts the analysis. External analysis providers may receive submitted content when enabled on the backend. Camera permission is used for QR scanning, and photo access is used when choosing an image. Store release signing, store listings, and physical-device release QA are separate release tasks.
+Live scan content is sent to the configured ProofLens API and handled under that server's settings and provider configuration. Review those settings before analyzing sensitive content. No scan runs just because a link or file was shared into the app; the user reviews it and starts the analysis. External analysis providers may receive submitted content when enabled on the backend. Camera permission is used for QR scanning, and photo access is used when choosing an image. Apply backend database migrations before using scan-retention controls. Store release signing, store listings, and physical-device release QA are separate release tasks.

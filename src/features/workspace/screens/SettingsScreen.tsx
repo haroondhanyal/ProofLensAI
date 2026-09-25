@@ -15,11 +15,15 @@ type SettingsScreenProps = {
     currentPassword: string;
     newPassword: string;
     confirmNewPassword: string;
+    showCurrentPassword: boolean;
+    showNewPassword: boolean;
     showConfirmNewPassword: boolean;
     theme: ThemeName;
     busy: boolean;
     error: string;
     notice: string;
+    scanRetentionDays: number | null;
+    deletePassword: string;
   };
   palette: WorkspacePalette;
   actions: {
@@ -31,9 +35,15 @@ type SettingsScreenProps = {
     onCurrentPasswordChange: (value: string) => void;
     onNewPasswordChange: (value: string) => void;
     onConfirmPasswordChange: (value: string) => void;
+    onToggleCurrentPassword: () => void;
+    onToggleNewPassword: () => void;
     onToggleConfirmPassword: () => void;
     onUpdatePassword: () => void;
     onThemeChange: (value: ThemeName) => void;
+    onRetentionChange: (value: number | null) => void;
+    onSaveRetention: () => void;
+    onDeletePasswordChange: (value: string) => void;
+    onDeleteAccount: () => void;
   };
 };
 
@@ -50,18 +60,39 @@ export function SettingsScreen({ data, palette, actions }: SettingsScreenProps) 
     <Pressable style={styles.primary} onPress={actions.onSaveProfile} disabled={data.busy}><Text style={styles.primaryText}>{data.busy ? 'Saving…' : 'Save profile'}</Text></Pressable>
 
     <Text style={[styles.sectionTitle, { color: palette.text }]}>Change password</Text>
-    <TextInput style={styles.input} placeholder="Current password" value={data.currentPassword} onChangeText={actions.onCurrentPasswordChange} secureTextEntry />
-    <TextInput style={styles.input} placeholder="New password (10+ characters)" value={data.newPassword} onChangeText={actions.onNewPasswordChange} secureTextEntry />
+    <View style={styles.passwordRow}>
+      <TextInput style={styles.passwordInput} placeholder="Current password" value={data.currentPassword} onChangeText={actions.onCurrentPasswordChange} secureTextEntry={!data.showCurrentPassword} autoComplete="current-password" />
+      <Pressable onPress={actions.onToggleCurrentPassword} style={styles.passwordToggle}><Text style={styles.linkText}>{data.showCurrentPassword ? 'Hide' : 'Show'}</Text></Pressable>
+    </View>
+    <View style={styles.passwordRow}>
+      <TextInput style={styles.passwordInput} placeholder="New password (10+ characters)" value={data.newPassword} onChangeText={actions.onNewPasswordChange} secureTextEntry={!data.showNewPassword} autoComplete="new-password" />
+      <Pressable onPress={actions.onToggleNewPassword} style={styles.passwordToggle}><Text style={styles.linkText}>{data.showNewPassword ? 'Hide' : 'Show'}</Text></Pressable>
+    </View>
     <View style={styles.passwordRow}>
       <TextInput style={styles.passwordInput} placeholder="Confirm new password" value={data.confirmNewPassword} onChangeText={actions.onConfirmPasswordChange} secureTextEntry={!data.showConfirmNewPassword} />
       <Pressable onPress={actions.onToggleConfirmPassword} style={styles.passwordToggle}><Text style={styles.linkText}>{data.showConfirmNewPassword ? 'Hide' : 'Show'}</Text></Pressable>
     </View>
     <Pressable style={styles.primary} onPress={actions.onUpdatePassword} disabled={data.busy}><Text style={styles.primaryText}>{data.busy ? 'Updating…' : 'Update password'}</Text></Pressable>
 
+    <Text style={[styles.sectionTitle, { color: palette.text }]}>Privacy · scan retention</Text>
+    <Text style={styles.help}>Expired scans and evidence are removed automatically by the API once a day.</Text>
+    <View style={styles.themeRow}>{([30, 90, 180, 365, null] as const).map((days) => {
+      const selected = data.scanRetentionDays === days;
+      const label = days === null ? 'Keep until deleted' : `${days} days`;
+      return <Pressable key={label} onPress={() => actions.onRetentionChange(days)} accessibilityRole="radio" accessibilityState={{ selected }} style={[styles.themeChip, { borderColor: selected ? palette.accent : palette.border, backgroundColor: palette.surface }]}>
+        <Text style={[styles.secondaryText, { color: palette.text }]}>{selected ? '✓ ' : ''}{label}</Text>
+      </Pressable>;
+    })}</View>
+    <Pressable style={styles.primary} onPress={actions.onSaveRetention} disabled={data.busy}><Text style={styles.primaryText}>{data.busy ? 'Saving…' : 'Save privacy settings'}</Text></Pressable>
+
     <Text style={[styles.sectionTitle, { color: palette.text }]}>Appearance</Text>
     <View style={styles.themeRow}>{(['Light', 'Ocean', 'Dark', 'Gray', 'High contrast'] as const).map((theme) => <Pressable key={theme} onPress={() => actions.onThemeChange(theme)} style={[styles.themeChip, { borderColor: data.theme === theme ? palette.accent : palette.border, backgroundColor: palette.surface }]}>
       <Text style={styles.secondaryText}>{data.theme === theme ? '✓ ' : ''}{theme}</Text>
     </Pressable>)}</View>
+    <Text style={[styles.sectionTitle, { color: palette.text }]}>Danger zone · delete account</Text>
+    <Text style={styles.help}>This permanently deletes your profile and saved reports.</Text>
+    <TextInput style={styles.input} placeholder="Confirm current password" value={data.deletePassword} onChangeText={actions.onDeletePasswordChange} secureTextEntry autoComplete="current-password" />
+    <Pressable style={styles.danger} onPress={actions.onDeleteAccount} disabled={data.busy}><Text style={styles.primaryText}>Delete account and data</Text></Pressable>
     {data.error !== '' && <Text style={styles.error}>{data.error}</Text>}
     {data.notice !== '' && <Text style={styles.notice}>{data.notice}</Text>}
   </>;
@@ -85,4 +116,6 @@ const styles = StyleSheet.create({
   themeChip: { padding: 10, borderWidth: 1, borderRadius: 9 },
   error: { color: '#a44840', backgroundColor: '#fff1ef', padding: 10, marginTop: 10, borderRadius: 7, fontSize: 12 },
   notice: { color: '#397658', backgroundColor: '#f0f8f3', padding: 10, marginTop: 10, borderRadius: 7, fontSize: 12 },
+  help: { color: '#71828b', fontSize: 11, lineHeight: 16, marginTop: 8 },
+  danger: { backgroundColor: '#a33d38', borderRadius: 9, padding: 14, alignItems: 'center', marginTop: 13, minHeight: 47, justifyContent: 'center' },
 });

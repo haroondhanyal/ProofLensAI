@@ -8,7 +8,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ai.prooflens.mobile"
+      "bundleIdentifier": "ai.prooflens.mobile",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,13 +36,23 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow ProofLens to scan QR codes before you open them."
+          "cameraPermission": "Allow ProofLens to scan QR codes before you open them.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow ProofLens to inspect a screenshot or image you choose."
+          "photosPermission": "Allow ProofLens to inspect a screenshot or image you choose.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "Allow ProofLens to securely access your saved sign-in session."
         }
       ],
       [

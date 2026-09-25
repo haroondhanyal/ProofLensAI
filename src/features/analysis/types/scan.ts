@@ -15,6 +15,8 @@ export type Scan = {
   recommendations: string[];
   created_at?: string;
   is_demo?: boolean;
+  is_saved?: boolean;
+  is_shared?: boolean;
   analysis_meta?: {
     local_ai?: { status?: string; model?: string; insight?: string };
     page_fetch?: { status?: string; final_url?: string; http_status?: number; redirect_count?: number };

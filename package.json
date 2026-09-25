@@ -11,6 +11,7 @@
     "expo-image-picker": "~57.0.20",
     "expo-linking": "~57.0.11",
     "expo-router": "~57.0.23",
+    "expo-secure-store": "~57.0.4",
     "expo-sharing": "~57.0.22",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
@@ -31,7 +32,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:android:preview": "npx eas-cli@latest build --platform android --profile preview",
+    "build:ios:simulator": "npx eas-cli@latest build --platform ios --profile preview",
+    "build:production": "npx eas-cli@latest build --platform all --profile production"
   },
   "private": true,
   "engines": {

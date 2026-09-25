@@ -8,9 +8,11 @@ type ScanReportScreenProps = {
   onBack: () => void;
   onShare: (scan: Scan) => void;
   onExportPdf: (scan: Scan) => void;
+  onToggleSaved: (scan: Scan) => void;
+  onDelete: (scan: Scan) => void;
 };
 
-export function ScanReportScreen({ scan, palette, onBack, onShare, onExportPdf }: ScanReportScreenProps) {
+export function ScanReportScreen({ scan, palette, onBack, onShare, onExportPdf, onToggleSaved, onDelete }: ScanReportScreenProps) {
   return <>
     <Pressable onPress={onBack}><Text style={styles.back}>‹ Back</Text></Pressable>
     {scan.is_demo && <View style={styles.demoBanner}><Text style={styles.demoTitle}>SIMULATED REPORT</Text><Text style={styles.demoCopy}>Not analyzed by ProofLens. Do not use this example to decide whether a real link or message is safe.</Text></View>}
@@ -48,8 +50,10 @@ export function ScanReportScreen({ scan, palette, onBack, onShare, onExportPdf }
       {scan.recommendations.map((item, index) => <Text style={[styles.copy, { color: palette.text }]} key={index}>• {item}</Text>)}
     </View>
     {!scan.is_demo && <View style={styles.actions}>
-      <Pressable style={styles.share} onPress={() => onShare(scan)}><Text style={styles.shareText}>Create private share link</Text></Pressable>
+      <Pressable style={styles.share} onPress={() => onToggleSaved(scan)}><Text style={styles.shareText}>{scan.is_saved ? 'Remove from saved' : 'Save this report'}</Text></Pressable>
+      <Pressable style={styles.share} onPress={() => onShare(scan)}><Text style={styles.shareText}>{scan.is_shared ? 'Revoke share link' : 'Create share link'}</Text></Pressable>
       <Pressable style={styles.share} onPress={() => onExportPdf(scan)}><Text style={styles.shareText}>Export PDF report</Text></Pressable>
+      <Pressable style={styles.danger} onPress={() => onDelete(scan)}><Text style={styles.dangerText}>Delete scan and evidence</Text></Pressable>
     </View>}
   </>;
 }
@@ -78,4 +82,6 @@ const styles = StyleSheet.create({
   share: { backgroundColor: 'white', borderColor: '#dce5e7', borderWidth: 1, borderRadius: 9, padding: 12, alignItems: 'center' },
   actions: { gap: 8, marginTop: 8 },
   shareText: { color: '#386e80', fontWeight: '600', fontSize: 12 },
+  danger: { backgroundColor: '#fff1ef', borderColor: '#f0d4cf', borderWidth: 1, borderRadius: 9, padding: 12, alignItems: 'center' },
+  dangerText: { color: '#a44840', fontWeight: '700', fontSize: 12 },
 });
