@@ -1,19 +1,29 @@
-# ProofLens AI Web
+# ProofLens AI — Web and API
 
 **Check Before You Trust.** ProofLens helps people inspect suspicious links, files, images, claims, and messages using explainable signals and evidence.
 
-This branch contains the ProofLens web frontend, API backend, browser extension, and shared project documentation. The standalone Expo/React Native app is maintained on the `mobile-app` branch.
+This is the web project branch (`main`). It contains the Next.js web app, FastAPI backend, browser extension, and shared documentation. The standalone Expo/React Native application, with its own root README, is kept on the `mobile-app` branch.
+
+## Web app features
+
+- Account registration, sign-in, password reset, profile/password settings, and selectable themes.
+- An authenticated workspace with dashboard, analyzer, scan history, and evidence reports.
+- Checks for URLs, messages, screenshots, QR codes, images, files, stores, products, and claims.
+- Optional local AI explanations through Ollama. AI advice is identified separately and does not set evidence or risk scores.
+- A browser extension for Chrome, Edge, and Firefox that hands a user-selected page, link, or text to the web workspace.
+- Fictional, read-only sample reports through **Explore sample workspace** on the sign-in screen.
 
 ## Requirements
 
 - Node.js 22.13+ or 24.3+
 - Python 3.11+
-- PostgreSQL 14+ (SQLite is available for local development)
+- SQLite for the simplest local setup, or PostgreSQL 14+
 
-## Run locally
+## Start the project locally
 
-1. Copy `.env.example` to `.env`, then set a strong `JWT_SECRET` and, if using PostgreSQL, `DATABASE_URL`.
-2. Start the backend:
+### 1. Configure the backend
+
+Copy `.env.example` to `.env`. Set a strong `JWT_SECRET`; configure `DATABASE_URL` when using PostgreSQL. SQLite is available for local development.
 
 ```sh
 cd backend
@@ -24,9 +34,11 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-The API is at http://localhost:8000 and its Swagger UI is at http://localhost:8000/docs.
+The API runs at http://localhost:8000 and its Swagger UI is at http://localhost:8000/docs.
 
-3. From the repository root, install and start the web app:
+### 2. Install and start the web app
+
+From the repository root:
 
 ```sh
 nvm use
@@ -34,32 +46,39 @@ npm install
 npm run dev:web
 ```
 
-Open http://localhost:3000. On the sign-in screen, **Explore sample workspace** opens read-only reports with fictional sample data.
+Open http://localhost:3000. You can register/sign in for live API checks, or choose **Explore sample workspace** for fictional read-only example reports. A live scan requires a running API.
 
-## What is included
+## Browser extension (Phase 3)
 
-- Web workspace with signup, login, password reset, account settings, and multiple themes.
-- URL, message, screenshot, QR, image, file, store, product, and claim analysis with evidence reports and history.
-- FastAPI backend with session authentication, SQLite development support, PostgreSQL support, and private report sharing.
-- Optional local AI explanations through Ollama. AI advice is separate from evidence and does not set risk scores.
-- Browser extension source in [`apps/extension/`](apps/extension/README.md).
+Build both browser packages from the repository root:
 
-Build the Chrome/Edge and Firefox browser extension packages with `npm run build:extension`, then follow the [extension setup instructions](apps/extension/README.md).
+```sh
+npm run build:extension
+```
 
-Optional integrations such as ClamAV, YARA, Google Web Risk, fact checks, and media analysis are described in [`docs/phase2-integrations.md`](docs/phase2-integrations.md). Provider keys and local services are not required for the sample workspace.
+Load `apps/extension/dist/chrome/` as an unpacked extension in Chrome or Edge. In Firefox 140+, load `apps/extension/dist/firefox/manifest.json` from `about:debugging`. Use the toolbar popup for the current page or selected text, or the context menu for pages, links, and selections. The extension opens the web app; sign in, review the content, then choose **Analyze safely** to run the shared API flow. See [`apps/extension/README.md`](apps/extension/README.md) for permissions, data flow, and detailed setup.
 
-## Checks
+## API, integrations, and project docs
+
+The API provides session authentication, scan endpoints, history, private report sharing, and report export. SQLite is the simplest development database; PostgreSQL is supported for deployment. Optional integrations such as ClamAV, YARA, Google Web Risk, fact checks, and media analysis are documented in [`docs/phase2-integrations.md`](docs/phase2-integrations.md). Provider credentials and local services are not needed for the sample workspace.
+
+- [`docs/architecture.md`](docs/architecture.md) — service and app layout.
+- [`docs/api.md`](docs/api.md) — API routes and request/response conventions.
+- [`docs/risk-engine.md`](docs/risk-engine.md) — evidence and risk scoring.
+- [`docs/security.md`](docs/security.md) — security model and data handling.
+- [`apps/extension/README.md`](apps/extension/README.md) — browser package setup.
+
+## Developer commands
 
 ```sh
 npm run lint
 npm run build:web
+npm run build:extension
 npm run test:backend
 ```
 
-For browser/API end-to-end checks, start the backend, then run `npx playwright install chromium` and `npm run test:e2e`.
+Browser/API end-to-end checks are available after starting the backend: install Playwright Chromium with `npx playwright install chromium`, then run `npm run test:e2e`.
 
-See [`docs/architecture.md`](docs/architecture.md), [`docs/risk-engine.md`](docs/risk-engine.md), [`docs/security.md`](docs/security.md), and [`docs/api.md`](docs/api.md) for more detail.
+## Data and limitations
 
-## Privacy and limitations
-
-Optional external providers receive the data needed for the enabled check; review their terms and data handling before configuring credentials. Scan text is stored with its report in the local database. Shared reports omit the original submitted content. A low-risk result is not a safety guarantee, and a risk score is not a probability.
+Submitted scan content is stored with its report in the configured database. Optional external providers receive the data needed for the enabled check; review provider terms and data handling before configuring them. Private shared reports omit the original submitted content. Sample reports are fictional and read-only. A low-risk result is not a safety guarantee, and a score is not a probability.
