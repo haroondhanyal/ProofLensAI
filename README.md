@@ -1,75 +1,101 @@
-# ProofLens AI Mobile
+# ProofLens AI — Mobile App
 
-Expo and React Native client for ProofLens AI. The mobile app has its own repository branch (`mobile-app`) and uses the shared ProofLens API for authentication, scans, history, and reports.
+The standalone Expo and React Native client for ProofLens AI. This project is maintained separately from the web/API project on the `mobile-app` Git branch. Its screens use the same ProofLens API; the backend and web app are documented on the `main` branch.
+
+## What the app includes
+
+- Sign in, account registration, country-code phone input, forgot-password, and reset-password screens.
+- A signed-in workspace with overview, analyzer, scan history, account settings, password update, and theme selection.
+- Scan entry points for links, messages, screenshots, QR codes, images, files, stores, products, and claims, backed by the shared API.
+- Evidence-based reports with risk level, score, confidence, findings, and recommended action.
+- Optional local-AI availability and explanations returned by the backend. AI advice is shown separately and does not change evidence or risk scores.
+- QR scanning through the device camera, image selection, private report links, and PDF report export/share.
+- Incoming OS shares for text, web links, and images. The app previews the shared content and waits for the user to choose **Analyze shared content**.
+- Fictional sample scans for preview; samples are labeled and cannot be shared as live reports.
 
 ## Requirements
 
 - Node.js 22.13+ or 24.3+
-- Android Studio with Android SDK 36 for Android builds
-- Xcode for iOS builds on macOS
-- A running ProofLens API backend
+- npm
+- Expo Go for compatible preview workflows
+- Android Studio/Android SDK for Android simulator or device builds
+- Xcode and macOS for iOS simulator or device builds
+- A reachable ProofLens API backend for sign-in and live analysis
 
-## Configure the API
+## Configure the API address
 
-Copy the example environment file and set the API address for the device you are using:
+Create a local environment file in the project root:
 
 ```sh
 cp .env.mobile.example .env
 ```
 
-Edit `EXPO_PUBLIC_API_URL` in `.env`:
+Set `EXPO_PUBLIC_API_URL` to the backend API root ending in `/api/v1`:
 
-- Android emulator: `http://10.0.2.2:8000/api/v1`
-- iOS simulator: `http://localhost:8000/api/v1`
-- Physical phone: use the development computer's LAN IP, for example `http://192.168.1.20:8000/api/v1`
+```dotenv
+EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1
+```
 
-Keep the phone and development computer on the same network. Local `.env` files are ignored by Git.
+Use an address reachable from the environment running the app:
 
-## Install and run
+| Target | Example API URL |
+| --- | --- |
+| iOS simulator | `http://localhost:8000/api/v1` |
+| Android emulator | `http://10.0.2.2:8000/api/v1` |
+| Physical phone | `http://192.168.1.20:8000/api/v1` (replace with your computer's LAN IP) |
+
+For a physical phone, allow the backend through the computer firewall and put both devices on the same network. The `.env` file is local configuration and should not be committed. A sample workspace may be available without a live backend, but live authentication and scans require the API.
+
+## Install and start
+
+Run these commands from the root of the mobile branch:
 
 ```sh
 npm install
-npx expo start
+npm run start
 ```
 
-Open the project in Expo Go when supported, or press `a` / `i` to launch an installed Android or iOS simulator. Native features such as camera and OS share intents require a development build for full device testing.
+Expo shows a QR code and development shortcuts. Open it with Expo Go where the native modules are supported, or press `a` / `i` to start an installed Android / iOS simulator. Use `npm run web` for the Expo web preview.
 
-## Build Android
+## Native development builds
 
-For a local Android debug build:
+Camera access and OS share registration need a native development build for reliable device verification. Generate/run the platform project with:
 
 ```sh
-npx expo run:android
+npm run android
+npm run ios
 ```
 
-To create a standalone APK with the JavaScript bundle included:
-
-```sh
-cd android
-./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
-```
-
-The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. The local generated `android/` directory and build output are ignored by Git. Release builds intended for Play Store distribution need a production signing key.
+`npm run ios` requires macOS with Xcode. Follow Expo's prompts for native project generation. Do not commit generated platform build folders unless the team intentionally adopts a native-project workflow.
 
 ## Project structure
 
-- `src/app/` — Expo Router routes and navigators
-- `src/core/api/` — shared authenticated API client
-- `src/core/theme/` — theme palette
-- `src/features/auth/` — sign in, signup, password recovery
-- `src/features/workspace/` — dashboard, analyzer, history, settings, and reports
-- `src/features/analysis/` — scan types, sample reports, and PDF sharing
-- `src/features/ai/` — API AI status and explanation UI
-- `src/features/share/` — incoming shared content screen
+```text
+src/
+├── app/                         Expo Router route entries and native share intent
+├── core/
+│   ├── api/client.ts            API URL, authenticated fetch, refresh, API errors
+│   └── theme/palette.ts         Shared app theme contract
+└── features/
+    ├── ai/                      Backend model status and AI explanation UI
+    ├── analysis/                Scan types, demo data, PDF export/share
+    ├── auth/                    Auth screens and country-code field/data
+    ├── share/                   Incoming OS share preview and analyze flow
+    └── workspace/               Overview, analyzer, history, settings, reports
+```
 
-Screens use React function components and hooks. Route files stay small and delegate feature UI to `src/features/`. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for details.
+Route files in `src/app/` stay small and delegate screens and domain logic to `src/features/`. `WorkspaceScreen` coordinates the signed-in workspace and its active screen. `core/api/client.ts` is the shared mobile HTTP entry point; feature screens should use it instead of constructing API URLs independently.
 
-## Quality checks
+For a fuller route, data-flow, and component guide, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Useful commands
 
 ```sh
-npx expo lint
-npx tsc --noEmit
+npm run lint
+npm run typecheck
 npx expo-doctor
 ```
 
-The app displays AI explanations only when the API has a local model configured. AI advice does not change the risk score. Sample reports are fictional and read-only.
+## Data handling and limitations
+
+Live scan content is sent to the configured ProofLens API and handled under that server's settings and provider configuration. Review those settings before analyzing sensitive content. No scan runs just because a link or file was shared into the app; the user reviews it and starts the analysis. External analysis providers may receive submitted content when enabled on the backend. Camera permission is used for QR scanning, and photo access is used when choosing an image. Store release signing, store listings, and physical-device release QA are separate release tasks.
