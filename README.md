@@ -1,6 +1,16 @@
+<p align="center">
+  <img src="apps/web/public/prooflens-mark.svg" alt="ProofLens AI logo" width="88">
+</p>
+
 # ProofLens AI — Web and API
 
 **Check Before You Trust.** ProofLens helps people inspect suspicious links, files, images, claims, and messages using explainable signals and evidence.
+
+### Latest Allure report overview
+
+Freshly generated from the latest 760-case QA run. The report includes the run summary, suite breakdown, category groups, and trend overview.
+
+![Fresh Allure QA report overview](apps/web/public/report-screenshots/allure-overview.png)
 
 This is the web project branch (`main`). It contains the Next.js web app, FastAPI backend, browser extension, and shared documentation. The standalone Expo/React Native application, with its own root README, is kept on the `mobile-app` branch.
 
@@ -56,10 +66,6 @@ The K6 overview has a dark, high-contrast dashboard below the shared branded hea
 ### Latest report pages
 
 The screenshots below are captured from the current generated reports. They are also served as static web assets from `apps/web/public/report-screenshots/`.
-
-**Allure overview — current 760-case run across five suites**
-
-![Current Allure QA report overview](apps/web/public/report-screenshots/allure-overview.png)
 
 **K6 performance overview — dark dashboard, metrics, timelines, workload latency, and feature coverage**
 
