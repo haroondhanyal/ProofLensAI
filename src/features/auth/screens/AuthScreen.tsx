@@ -46,8 +46,13 @@ const AUTH_FEATURES = [
 ];
 
 export function AuthScreen({ data, palette, actions }: AuthScreenProps) {
-  return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+  return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
     <StatusBar style="dark" />
+    <ScrollView
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+    >
     <View style={styles.brandRow}><Text style={styles.brandIcon}>✓</Text><Text style={[styles.brand, { color: palette.text }]}>ProofLens <Text style={styles.ai}>AI</Text></Text></View>
     <Text style={styles.kicker}>CHECK BEFORE YOU TRUST</Text>
     <Text style={[styles.title, { color: palette.text }]}>{data.mode === 'login' ? 'Welcome back' : 'Create account'}</Text>
@@ -78,6 +83,7 @@ export function AuthScreen({ data, palette, actions }: AuthScreenProps) {
     <View style={styles.divider} />
     <Pressable style={styles.secondary} onPress={actions.onStartDemo}><Text style={styles.secondaryText}>✦ LIMITED EDITION · Explore sample workspace</Text></Pressable>
     <Text style={styles.disclaimer}>Demo data is synthetic. No live scan was run.</Text>
+    </ScrollView>
   </KeyboardAvoidingView>;
 }
 
@@ -89,7 +95,8 @@ function PasswordField({ label, value, visible, onChangeText, onToggle }: { labe
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#f7f9fa' },
+  screen: { flex: 1, backgroundColor: '#f7f9fa' },
+  content: { flexGrow: 1, padding: 24, paddingBottom: 36 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 24 },
   brandIcon: { backgroundColor: '#e9f3f5', color: '#266b86', overflow: 'hidden', padding: 8, borderRadius: 10, fontWeight: '800' },
   brand: { fontSize: 20, fontWeight: '800' }, ai: { fontSize: 11, color: '#668492' },

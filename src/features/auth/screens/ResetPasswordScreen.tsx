@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { apiFetch } from '../../../core/api/client';
 
@@ -27,7 +27,7 @@ export default function ResetPasswordScreen() {
     finally { setBusy(false); }
   }
 
-  return <View style={styles.screen}>
+  return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
     <Text style={styles.brand}>ProofLens <Text style={styles.ai}>AI</Text></Text>
     <Text style={styles.kicker}>ACCOUNT SECURITY</Text><Text style={styles.title}>Choose a new password</Text>
     <Text style={styles.copy}>Reset links 30 minutes mein expire hote hain aur sirf ek baar use ho sakte hain.</Text>
@@ -37,7 +37,7 @@ export default function ResetPasswordScreen() {
     {error !== '' && <Text style={styles.error}>{error}</Text>}{notice !== '' && <Text style={styles.notice}>{notice}</Text>}
     <Pressable style={styles.primary} onPress={submit} disabled={busy}>{busy ? <ActivityIndicator color="white"/> : <Text style={styles.primaryText}>Update password</Text>}</Pressable>
     <Pressable style={styles.back} onPress={() => router.replace('/')}><Text style={styles.link}>‹ Return to sign in</Text></Pressable>
-  </View>;
+  </ScrollView></KeyboardAvoidingView>;
 }
 
-const styles = StyleSheet.create({ screen: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#f7f9fa' }, brand: { fontSize: 22, fontWeight: '800', color: '#192b3d', marginBottom: 34 }, ai: { fontSize: 12, color: '#668492' }, kicker: { fontSize: 10, letterSpacing: 1.4, color: '#8999a2', fontWeight: '700' }, title: { fontSize: 25, fontWeight: '700', color: '#192b3d', marginTop: 8 }, copy: { fontSize: 12, lineHeight: 19, color: '#7b8a93', marginTop: 7, marginBottom: 10 }, feature:{padding:14,borderRadius:11,backgroundColor:'#e8f2f3',borderWidth:1,borderColor:'#d8e7e9',marginTop:6,marginBottom:6},featureTag:{fontSize:8,letterSpacing:1,color:'#286c8b',fontWeight:'800'},featureTitle:{fontSize:14,fontWeight:'700',color:'#192b3d',marginTop:7},featureCopy:{fontSize:10,lineHeight:15,color:'#637983',marginTop:4}, passwordRow: { backgroundColor: 'white', borderColor: '#dfe6e8', borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, marginTop: 12, flexDirection: 'row', alignItems: 'center' }, passwordInput: { flex: 1, paddingVertical: 13, fontSize: 14, color: '#203744' }, link: { color: '#286c8b', fontSize: 12, fontWeight: '700' }, primary: { backgroundColor: '#286c8b', borderRadius: 9, padding: 14, alignItems: 'center', marginTop: 13, minHeight: 47, justifyContent: 'center' }, primaryText: { color: 'white', fontSize: 13, fontWeight: '700' }, back: { alignItems: 'center', padding: 16 }, error: { color: '#a44840', backgroundColor: '#fff1ef', padding: 10, marginTop: 10, borderRadius: 7, fontSize: 12 }, notice: { color: '#397658', backgroundColor: '#f0f8f3', padding: 10, marginTop: 10, borderRadius: 7, fontSize: 12, lineHeight: 18 } });
+const styles = StyleSheet.create({ screen: { flex: 1, backgroundColor: '#f7f9fa' }, content: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 36 }, brand: { fontSize: 22, fontWeight: '800', color: '#192b3d', marginBottom: 34 }, ai: { fontSize: 12, color: '#668492' }, kicker: { fontSize: 10, letterSpacing: 1.4, color: '#8999a2', fontWeight: '700' }, title: { fontSize: 25, fontWeight: '700', color: '#192b3d', marginTop: 8 }, copy: { fontSize: 12, lineHeight: 19, color: '#7b8a93', marginTop: 7, marginBottom: 10 }, feature:{padding:14,borderRadius:11,backgroundColor:'#e8f2f3',borderWidth:1,borderColor:'#d8e7e9',marginTop:6,marginBottom:6},featureTag:{fontSize:8,letterSpacing:1,color:'#286c8b',fontWeight:'800'},featureTitle:{fontSize:14,fontWeight:'700',color:'#192b3d',marginTop:7},featureCopy:{fontSize:10,lineHeight:15,color:'#637983',marginTop:4}, passwordRow: { backgroundColor: 'white', borderColor: '#dfe6e8', borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, marginTop: 12, flexDirection: 'row', alignItems: 'center' }, passwordInput: { flex: 1, paddingVertical: 13, fontSize: 14, color: '#203744' }, link: { color: '#286c8b', fontSize: 12, fontWeight: '700' }, primary: { backgroundColor: '#286c8b', borderRadius: 9, padding: 14, alignItems: 'center', marginTop: 13, minHeight: 47, justifyContent: 'center' }, primaryText: { color: 'white', fontSize: 13, fontWeight: '700' }, back: { alignItems: 'center', padding: 16 }, error: { color: '#a44840', backgroundColor: '#fff1ef', padding: 10, marginTop: 10, borderRadius: 7, fontSize: 12 }, notice: { color: '#397658', backgroundColor: '#f0f8f3', padding: 10, marginTop: 10, borderRadius: 7, fontSize: 12, lineHeight: 18 } });

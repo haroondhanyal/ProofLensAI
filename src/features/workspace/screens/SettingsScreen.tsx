@@ -10,6 +10,7 @@ type SettingsScreenProps = {
     name: string;
     email: string;
     profilePhoto: ImagePickerAsset | null;
+    avatarUri?: string;
     phoneCountry: PhoneCountry;
     phone: string;
     currentPassword: string;
@@ -48,12 +49,17 @@ type SettingsScreenProps = {
 };
 
 export function SettingsScreen({ data, palette, actions }: SettingsScreenProps) {
+  const profilePhotoUri = data.profilePhoto?.uri ?? data.avatarUri;
   return <>
     <Text style={styles.kicker}>ACCOUNT & PREFERENCES</Text>
     <Text style={[styles.title, { color: palette.text }]}>Settings</Text>
     <Text style={[styles.sectionTitle, { color: palette.text }]}>Profile</Text>
-    <Pressable style={styles.secondary} onPress={actions.onChooseProfilePhoto}><Text style={styles.secondaryText}>{data.profilePhoto ? 'Choose another photo' : 'Edit profile photo'}</Text></Pressable>
-    {data.profilePhoto && <Image source={{ uri: data.profilePhoto.uri }} style={styles.profilePhoto} />}
+    <View style={[styles.profileSummary, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+      {profilePhotoUri ? <Image source={{ uri: profilePhotoUri }} style={styles.profilePhoto} /> : <View style={[styles.profilePhoto, styles.profilePhotoFallback, { backgroundColor: `${palette.accent}1A` }]}><Text style={[styles.profileInitial, { color: palette.accent }]}>{data.name.slice(0, 1).toUpperCase() || '?'}</Text></View>}
+      <View style={styles.profileSummaryText}><Text numberOfLines={1} style={[styles.profileName, { color: palette.text }]}>{data.name || 'Your profile'}</Text><Text numberOfLines={1} style={styles.profileEmail}>{data.email}</Text><Text numberOfLines={1} style={styles.profilePhone}>{data.phone ? `${data.phoneCountry.dial} ${data.phone}` : 'Add a phone number'}</Text></View>
+    </View>
+    <Pressable style={styles.secondary} onPress={actions.onChooseProfilePhoto}><Text style={styles.secondaryText}>{profilePhotoUri ? 'Change profile photo' : 'Add profile photo'}</Text></Pressable>
+    <Text style={styles.help}>JPEG, PNG or WEBP · up to 20 MB</Text>
     <TextInput style={styles.input} placeholder="Full name" value={data.name} onChangeText={actions.onNameChange} />
     <TextInput style={styles.input} placeholder="Email address" value={data.email} editable={false} />
     <CountryCodeField country={data.phoneCountry} onCountry={actions.onPhoneCountryChange} value={data.phone} onValue={actions.onPhoneChange} placeholder="Phone number" />
@@ -104,7 +110,14 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 12, fontWeight: '700', marginTop: 18 },
   secondary: { backgroundColor: 'white', borderColor: '#dce5e7', borderWidth: 1, borderRadius: 9, padding: 12, alignItems: 'center', marginTop: 12 },
   secondaryText: { color: '#386e80', fontWeight: '600', fontSize: 12 },
-  profilePhoto: { width: 62, height: 62, borderRadius: 31, alignSelf: 'center', marginTop: 10 },
+  profileSummary: { flexDirection: 'row', alignItems: 'center', gap: 13, padding: 14, borderWidth: 1, borderRadius: 12, marginTop: 10 },
+  profilePhoto: { width: 70, height: 70, borderRadius: 35 },
+  profilePhotoFallback: { alignItems: 'center', justifyContent: 'center' },
+  profileInitial: { fontSize: 23, fontWeight: '800' },
+  profileSummaryText: { flex: 1 },
+  profileName: { fontSize: 14, fontWeight: '700' },
+  profileEmail: { color: '#71828b', fontSize: 11, marginTop: 4 },
+  profilePhone: { color: '#89979f', fontSize: 10, marginTop: 4 },
   input: { backgroundColor: 'white', borderColor: '#dfe6e8', borderWidth: 1, borderRadius: 9, padding: 13, fontSize: 14, color: '#203744', marginTop: 12 },
   primary: { backgroundColor: '#286c8b', borderRadius: 9, padding: 14, alignItems: 'center', marginTop: 13, minHeight: 47, justifyContent: 'center' },
   primaryText: { color: 'white', fontSize: 13, fontWeight: '700' },
