@@ -45,11 +45,21 @@ a { color: var(--prooflens-brand); }
 .prooflens-k6-theme select { max-width:150px; padding:6px 8px; color:#fff; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.4); border-radius:7px; font-family:inherit; font-size:10px; font-weight:650; }
 .prooflens-k6-theme option { color:#172b3a; background:#fff; }
 .prooflens-k6-owner { grid-template-columns:auto auto; align-items:center; column-gap:10px; }
+body:has(.prooflens-k6-header) { background:#071321 !important; color:#e6eefc !important; }
 .prooflens-k6-header + main .eyebrow { color:var(--prooflens-brand); }
 .prooflens-k6-header + main .section-head a,.prooflens-k6-header + main .button-link { background:var(--prooflens-brand); }
 .prooflens-k6-header + main .family-track i,.prooflens-k6-header + main .latency-track i { background:var(--prooflens-brand) !important; }
 .prooflens-k6-header + main .family-track i { opacity:.86; }
-.prooflens-k6-header + main .kpi,.prooflens-k6-header + main .panel { border-color:color-mix(in srgb, var(--prooflens-brand) 17%, #dfe8ee); }
+.prooflens-k6-header + main .kpi,.prooflens-k6-header + main .panel { border-color:#2a4262 !important; background:#12233b !important; color:#e6eefc !important; }
+.prooflens-k6-header + main .kpi small,.prooflens-k6-header + main .kpi p,.prooflens-k6-header + main .sub { color:#a8bad2 !important; }
+.prooflens-k6-header + main .family,.prooflens-k6-header + main .detail-grid article { background:#0e1e33 !important; color:#e6eefc !important; border-color:#2a4262 !important; }
+.prooflens-k6-header + main .family small,.prooflens-k6-header + main .detail-grid p { color:#a8bad2 !important; }
+.prooflens-k6-header + main th { background:#0c1b2d !important; color:#b8c8dc !important; }
+.prooflens-k6-header + main td { border-color:#293e5a !important; }
+.prooflens-k6-header + main .detail-row td { background:#0d1a2b !important; }
+.prooflens-k6-header + main .empty { background:#0c1a2b !important; color:#a8bad2 !important; border-color:#405776 !important; }
+.prooflens-k6-header + main .latency-row { border-color:#293e5a !important; }
+.prooflens-k6-header + main input,.prooflens-k6-header + main select { background:#0d1b2d !important; color:#e6eefc !important; border-color:#405777 !important; }
 .prooflens-k6-header + main .k6-feature-link:hover { border-color:var(--prooflens-brand); }
 .k6-feature-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:9px; }
 .k6-feature-link { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 13px; border:1px solid #dfe8ee; border-radius:10px; background:#fff; color:#172b3a !important; text-decoration:none; }
@@ -61,7 +71,7 @@ a { color: var(--prooflens-brand); }
 </style>`;
 
 function k6Header() {
-  return `<header class="prooflens-k6-header"><a class="prooflens-k6-brand" href="k6-report.html"><img src="prooflens-mark.svg" alt="ProofLens logo"><span class="prooflens-k6-brand-copy"><b>ProofLens AI</b><small>K6 Performance QA</small></span></a><div class="prooflens-k6-owner"><span><b>Raja Haroon Jamal</b><small>Full Stack QA Engineer · Department: QA</small></span><label class="prooflens-k6-theme" for="prooflens-report-theme">Theme<select id="prooflens-report-theme" aria-label="Choose shared report theme"><option value="prooflens">ProofLens teal</option><option value="dark-grey">Dark grey</option><option value="green">Green</option><option value="red">Red</option><option value="blue">Blue</option><option value="high-contrast-blue">High contrast blue</option><option value="purple">Purple</option><option value="amber">Amber</option></select></label></div><nav class="prooflens-k6-nav" aria-label="K6 report navigation"><a href="k6-report.html">Overview</a><a href="k6-cases-report.html">Case details</a><a href="allure-report/index.html">Allure report</a></nav></header>`;
+  return `<header class="prooflens-k6-header"><a class="prooflens-k6-brand" href="k6-report.html"><img src="../public/prooflens-mark.svg" alt="ProofLens logo"><span class="prooflens-k6-brand-copy"><b>ProofLens AI</b><small>K6 Performance QA</small></span></a><div class="prooflens-k6-owner"><span><b>Raja Haroon Jamal</b><small>Full Stack QA Engineer · Department: QA</small></span><label class="prooflens-k6-theme" for="prooflens-report-theme">Theme<select id="prooflens-report-theme" aria-label="Choose shared report theme"><option value="prooflens">ProofLens teal</option><option value="dark-grey">Dark grey</option><option value="green">Green</option><option value="red">Red</option><option value="blue">Blue</option><option value="high-contrast-blue">High contrast blue</option><option value="purple">Purple</option><option value="amber">Amber</option></select></label></div><nav class="prooflens-k6-nav" aria-label="K6 report navigation"><a href="k6-report.html">Overview</a><a href="k6-cases-report.html">Case details</a><a href="allure-report/index.html">Allure report</a></nav></header>`;
 }
 
 const themeScript = `<script id="prooflens-report-theme-script">(()=>{const select=document.getElementById('prooflens-report-theme');if(!select)return;const allowed=new Set([...select.options].map(o=>o.value)),key='prooflens-report-theme';function apply(value){const theme=allowed.has(value)?value:'prooflens';document.documentElement.dataset.prooflensTheme=theme;select.value=theme}try{apply(localStorage.getItem(key)||localStorage.getItem('prooflens-allure-header-theme')||'prooflens')}catch{apply('prooflens')}select.addEventListener('change',()=>{apply(select.value);try{localStorage.setItem(key,select.value)}catch{}});window.addEventListener('storage',event=>{if(event.key===key)apply(event.newValue)})})();</script>`;

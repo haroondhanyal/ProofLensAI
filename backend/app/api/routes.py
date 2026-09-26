@@ -343,9 +343,10 @@ async def update_profile_avatar(file: UploadFile = File(...), db: Session = Depe
 
     if file.content_type not in {"image/jpeg", "image/png", "image/webp"}:
         raise HTTPException(415, "Choose a JPEG, PNG, or WEBP profile photo.")
-    blob = await file.read(3 * 1024 * 1024 + 1)
-    if len(blob) > 3 * 1024 * 1024:
-        raise HTTPException(413, "Profile photo must be 3 MB or smaller.")
+    max_avatar_bytes = 20 * 1024 * 1024
+    blob = await file.read(max_avatar_bytes + 1)
+    if len(blob) > max_avatar_bytes:
+        raise HTTPException(413, "Profile photo must be 20 MB or smaller.")
     try:
         with Image.open(BytesIO(blob)) as source:
             if source.width * source.height > 20_000_000:

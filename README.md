@@ -1,8 +1,18 @@
-# ProofLens AI — Web and API
+<p align="center">
+  <img src="apps/web/public/prooflens-mark.svg" alt="ProofLens AI logo" width="88">
+</p>
+
+# ProofLens AI — Web, Mobile, and API
 
 **Check Before You Trust.** ProofLens helps people inspect suspicious links, files, images, claims, and messages using explainable signals and evidence.
 
-This is the web project branch (`main`). It contains the Next.js web app, FastAPI backend, browser extension, and shared documentation. The standalone Expo/React Native application, with its own root README, is kept on the `mobile-app` branch.
+### Latest Allure report overview
+
+Freshly generated from the latest 760-case QA run. The report includes the run summary, suite breakdown, category groups, and trend overview.
+
+![Fresh Allure QA report overview](apps/web/public/report-screenshots/allure-overview.png)
+
+This repository contains the Next.js web app, Expo/React Native mobile app, FastAPI backend, browser extension, QA automation, and shared documentation. The mobile app has its own Expo configuration under `Mobile APP/` and uses the same versioned API as the web client.
 
 ## Web app features
 
@@ -14,6 +24,44 @@ This is the web project branch (`main`). It contains the Next.js web app, FastAP
 - Optional local AI explanations through Ollama. AI advice is identified separately and does not set evidence or risk scores.
 - A browser extension for Chrome, Edge, and Firefox that hands a user-selected page, link, or text to the web workspace.
 - Fictional, read-only sample reports through **Explore sample workspace** on the sign-in screen.
+- A native Expo mobile client with a drawer for Overview, Check, History, Profile & Settings, sign-out, and app-wide themes.
+- Mobile profile editing with authenticated avatar display across Settings, the workspace header, and navigation drawer; profile photo uploads support up to 20 MB.
+- Mobile keyboard-aware sign-in, password recovery, message analysis, and settings forms.
+
+## Application structure
+
+The repository separates the user-facing clients, API, and quality tooling. The web client calls the versioned FastAPI service; the service validates requests, runs analyzers, stores scan evidence, and returns structured reports. Provider integrations are optional and are isolated behind backend adapters.
+
+```text
+ProofLensAI/
+├── apps/
+│   ├── web/                 Next.js App Router product and report pages
+│   │   ├── app/             Routes, including shared proof reports and password reset
+│   │   ├── e2e/             Playwright suites, BDD features, fixtures, and test assets
+│   │   ├── performance/k6/  Authenticated K6 workload matrix
+│   │   ├── scripts/         QA orchestration, Allure import/branding, report builders
+│   │   └── public/          Product assets and report screenshots
+│   └── extension/           Chrome/Edge and Firefox manifests and packaging scripts
+├── Mobile APP/               Expo Router application for Android, iOS, and web preview
+│   ├── src/app/              Expo Router routes and native share-intent entry
+│   ├── src/core/             API client, session handling, and theme persistence
+│   └── src/features/         Auth, analysis, incoming shares, and workspace screens
+├── backend/
+│   ├── app/api/             Versioned FastAPI routes
+│   ├── app/analyzers/       Deterministic URL, message, file, image, and claim checks
+│   ├── app/providers/       Optional external and local service adapters
+│   ├── app/services/        Scan orchestration, evidence, reports, and auth logic
+│   ├── app/db/              Database setup and persistence
+│   ├── app/models/          API and database models
+│   ├── migrations/          Alembic schema migrations
+│   └── tests/               Backend unit and integration coverage
+├── docs/                    Architecture, API, security, risk engine, integrations
+├── scripts/                 Repository-level automation helpers
+├── package.json             Workspace and root developer/QA commands
+└── README.md                Setup, architecture, QA, and report entry point
+```
+
+At runtime, the web app, Expo mobile app, and browser extension use the FastAPI `/api/v1` endpoints. The mobile client stores access and refresh tokens in platform secure storage and shares the same analysis, history, profile, and report APIs as the web app. API services validate each request, call local analyzers and configured provider adapters, then persist results through the database layer. During QA, Playwright UI/API/system suites, generated BDD scenarios, and K6 workloads feed Allure and the overview/detail report builders.
 
 ## QA automation and reports
 
@@ -37,41 +85,72 @@ Use Node 24.6 (`nvm use` at the repository root), install npm dependencies, and 
 cp apps/web/.env.qa.example apps/web/.env.qa
 ```
 
-The checked-in template contains local QA URLs and performance settings only; do not put provider keys or production credentials in it. Run all suites and reports:
+The checked-in template contains local QA URLs and performance settings only; do not put provider keys or production credentials in it. It defaults to a 10 VU, 30-second K6 smoke profile. Run the complete 760-case session from the repository root:
 
 ```sh
 npm run test:qa
 ```
 
-Docker Desktop must be running and able to use the `grafana/k6:1.6.1` image. The API must be reachable at the QA URL. The runner generates BDD tests, runs 610 Playwright cases and 150 k6 cases, imports results into Allure, and builds ProofLens branded grouped reports.
+Docker Desktop must be running and able to use the `grafana/k6:1.6.1` image. The API must be reachable at the QA URL. The runner performs this sequence:
+
+1. Generates the 120 Gherkin scenario examples from `apps/web/e2e/features/`.
+2. Runs the 610 Playwright UI, API, BDD, and system/integration cases. Browser failures keep their screenshots, videos, traces, and Allure result attachments.
+3. Runs the 150 authenticated K6 cases against the local test API using a temporary account and synthetic `.example` data; teardown deletes the account and generated scan data.
+4. Imports one Allure result per K6 case, including an individual JSON result attachment. The K6 case view includes expected/observed HTTP status, attempt count, assertion pass rate, per-case latency distribution, and response character-count averages/maxima. Response bodies are intentionally excluded.
+5. Exports raw k6 JSON time-series samples, applies category grouping, generates the full Allure report, and builds the ProofLens suite, trend, K6 overview, and searchable K6 case reports.
+
+The K6 overview has a dark, high-contrast dashboard below the shared branded header. It includes run KPIs, latency distribution, per-feature workload coverage, slowest workloads, and native-style time-series graphs for HTTP request rate/latency/failures, virtual users/request activity, and received/sent transfer rates. The same run graphs also appear above the case list on the K6 detail page. Raw time-series are exported to the ignored `apps/web/reports/k6-timeseries.json`; older saved runs without this file show an explicit “not captured” state. Each K6 case expands to show its synthetic actor/authentication context, method and route, safe request-input summary, expected and observed status, attempts, assertion pass rate, latency distribution, response-size measurements, and result. Tokens, passwords, and response bodies are not displayed. Search and family/result filters help locate cases.
 
 ### Latest report pages
 
 The screenshots below are captured from the current generated reports. They are also served as static web assets from `apps/web/public/report-screenshots/`.
 
-**Allure overview — 760 passing cases across five suites**
-
-![Current Allure QA report overview](apps/web/public/report-screenshots/allure-overview.png)
-
-**K6 performance overview — 150 cases, workload summary, latency profile, and all 19 feature families**
+**K6 performance overview — dark dashboard, metrics, timelines, workload latency, and feature coverage**
 
 ![Current K6 performance overview](apps/web/public/report-screenshots/k6-overview.png)
 
-**K6 case list — filter all 150 cases and expand a case ID to inspect its request, expected HTTP status, attempts, check pass rate, and final result**
+**K6 run graphs — actual request, VU, and transfer timelines from the latest 30-second run**
 
-![Current K6 case details with an expanded case](apps/web/public/report-screenshots/k6-cases.png)
+![K6 request, VU and transfer timeline graphs](apps/web/public/report-screenshots/k6-cases.png)
 
-The current K6 run reports 150/150 cases passed, 150/150 checks passed, 156 requests, 4.58 requests/second, 10 peak virtual users over 30 seconds, 31.2 ms median latency, 143 ms p90, 270.4 ms p95, 160.9 ms average latency, and 5,289.6 ms maximum latency. The case details page shows the full list and provides search, feature/status filters, and an expandable result summary for each case.
+**Expanded K6 case — synthetic actor, safe request summary, expected/observed status, timings, and result**
+
+![Expanded K6 case evidence](apps/web/public/report-screenshots/k6-case-expanded.png)
+
+The latest K6 run reports 150/150 cases and checks passed, 156 requests, 4.65 requests/second, 10 virtual users over 30 seconds, 17.5 ms median latency, 72.6 ms p90, 140.4 ms p95, 128.8 ms average, and 5,122.2 ms maximum. Its raw timeline is rendered in the HTTP performance, VUs/request, and transfer-rate charts on both K6 pages. The overall QA run passed 731/760 cases; the remaining API/signup and two viewport failures are recorded in Allure and Playwright artifacts, including rate-limit responses.
 
 Allure suite totals are UI 265, K6 150, API 125, BDD 120, and System + Integration 100. The generated local reports are `apps/web/reports/allure-report/index.html` (full Allure), `apps/web/reports/k6-report.html` (K6 overview), and `apps/web/reports/k6-cases-report.html` (case list). These report outputs are generated locally and are not committed; rebuild them with the QA commands below.
 
-Run a single suite with `npm run test:ui`, `npm run test:api`, `npm run test:bdd`, `npm run test:system`, or `npm run test:k6`. These commands run from the repository root. k6's 10 VU, 30 second default is a local performance smoke profile; its thresholds are not a production capacity certification. Override the VU count and duration in the ignored `apps/web/.env.qa` file for a deliberately sized QA run.
+Run an individual suite from the repository root with `npm run test:ui`, `npm run test:api`, `npm run test:bdd`, `npm run test:system`, or `npm run test:k6`. K6's 10 VU, 30-second default is a local performance smoke profile; its thresholds are not a production capacity certification. Override the VU count and duration in the ignored `apps/web/.env.qa` file for a deliberately sized QA run.
+
+## Mobile app (Expo / React Native)
+
+The Expo app lives in `Mobile APP/`. It provides sign-in and registration, link/message/image/QR/file checks, evidence reports, history, profile and password settings, theme selection, and native share-to-ProofLens flows. The workspace drawer includes Overview, Check, History, Profile & Settings, theme controls, and sign-out. Profile avatars are fetched through the authenticated API client and may be uploaded up to 20 MB; the same photo appears in profile settings, the header, and the drawer.
+
+Configure the API endpoint from the mobile project directory:
+
+```sh
+cd "Mobile APP"
+cp .env.mobile.example .env
+```
+
+Set `EXPO_PUBLIC_API_URL` to an address the device can reach, ending in `/api/v1`. The sample defaults to the Android emulator address `http://10.0.2.2:8000/api/v1`; use `http://localhost:8000/api/v1` for the iOS simulator. For a physical Android or iOS phone, use the development computer's LAN IP, such as `http://192.168.1.20:8000/api/v1`, and connect both devices to the same Wi-Fi. The mobile env example enables React Native's native fetch implementation for local-file multipart uploads.
+
+Start the API using the backend instructions above, then run Expo from the repository root with `npm run mobile`, or from `Mobile APP/` with:
+
+```sh
+npm install
+npm run start -- --go --lan
+```
+
+Scan the displayed QR code using Expo Go. Keep the API process reachable from the phone and allow the API port through the development computer's firewall. Run `npm run lint` and `npm run typecheck` inside `Mobile APP/` to check the mobile source. Native camera/share behavior and store-ready release builds should also be verified with Android Studio/Xcode development builds; see [`Mobile APP/README.md`](Mobile%20APP/README.md) for EAS profiles, native workflows, and mobile project structure.
 
 ## Requirements
 
 - Node.js 22.13+ or 24.3+
 - Python 3.11+
 - SQLite for the simplest local setup, or PostgreSQL 14+
+- Expo Go for mobile preview; Android Studio/Android SDK or Xcode for native development builds
 
 ## Start the project locally
 
