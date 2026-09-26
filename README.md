@@ -25,6 +25,37 @@ This is the web project branch (`main`). It contains the Next.js web app, FastAP
 - A browser extension for Chrome, Edge, and Firefox that hands a user-selected page, link, or text to the web workspace.
 - Fictional, read-only sample reports through **Explore sample workspace** on the sign-in screen.
 
+## Application structure
+
+The repository separates the user-facing clients, API, and quality tooling. The web client calls the versioned FastAPI service; the service validates requests, runs analyzers, stores scan evidence, and returns structured reports. Provider integrations are optional and are isolated behind backend adapters.
+
+```text
+ProofLensAI/
+├── apps/
+│   ├── web/                 Next.js App Router product and report pages
+│   │   ├── app/             Routes, including shared proof reports and password reset
+│   │   ├── e2e/             Playwright suites, BDD features, fixtures, and test assets
+│   │   ├── performance/k6/  Authenticated K6 workload matrix
+│   │   ├── scripts/         QA orchestration, Allure import/branding, report builders
+│   │   └── public/          Product assets and report screenshots
+│   └── extension/           Chrome/Edge and Firefox manifests and packaging scripts
+├── backend/
+│   ├── app/api/             Versioned FastAPI routes
+│   ├── app/analyzers/       Deterministic URL, message, file, image, and claim checks
+│   ├── app/providers/       Optional external and local service adapters
+│   ├── app/services/        Scan orchestration, evidence, reports, and auth logic
+│   ├── app/db/              Database setup and persistence
+│   ├── app/models/          API and database models
+│   ├── migrations/          Alembic schema migrations
+│   └── tests/               Backend unit and integration coverage
+├── docs/                    Architecture, API, security, risk engine, integrations
+├── scripts/                 Repository-level automation helpers
+├── package.json             Workspace and root developer/QA commands
+└── README.md                Setup, architecture, QA, and report entry point
+```
+
+At runtime, the web app and browser extension use the FastAPI `/api/v1` endpoints. API services validate each request, call local analyzers and configured provider adapters, then persist results through the database layer. During QA, Playwright UI/API/system suites, generated BDD scenarios, and K6 workloads feed Allure and the overview/detail report builders. The standalone Expo mobile app is maintained on the `mobile-app` branch.
+
 ## QA automation and reports
 
 The complete QA profile is designed to execute **760 named cases**:
@@ -85,7 +116,6 @@ Allure suite totals are UI 265, K6 150, API 125, BDD 120, and System + Integrati
 
 Run an individual suite from the repository root with `npm run test:ui`, `npm run test:api`, `npm run test:bdd`, `npm run test:system`, or `npm run test:k6`. K6's 10 VU, 30-second default is a local performance smoke profile; its thresholds are not a production capacity certification. Override the VU count and duration in the ignored `apps/web/.env.qa` file for a deliberately sized QA run.
 
-
 ## Requirements
 
 - Node.js 22.13+ or 24.3+
@@ -119,9 +149,11 @@ npm install
 npm run dev:web
 ```
 
-Open http://localhost:3000. You can register/sign in for live API checks, or choose **Explore sample workspace** for fictional read-only example reports. A live scan requires a running API.
+Open http://localhost:3001. You can register/sign in for live API checks, or choose **Explore sample workspace** for fictional read-only example reports. A live scan requires a running API.
 
 ## Browser extension (Phase 3)
+
+**Phase 3 implementation is complete:** the extension supports current-page checks, selected links and text, and opens the existing ProofLens web flow/API after the user reviews and submits the handoff. Chrome/Edge and Firefox packages build locally. Public store submission is a release task and still needs publisher accounts and store review.
 
 Build both browser packages from the repository root:
 
@@ -141,11 +173,16 @@ The API provides session authentication, scan endpoints, history, private report
 - [`docs/security.md`](docs/security.md) — security model and data handling.
 - [`apps/extension/README.md`](apps/extension/README.md) — browser package setup.
 
-## Scope that remains future work
+## Completion status and deployment-dependent work
 
-- Live/community threat alerts and an administrator threat-monitoring console.
-- Video and audio analysis, social sign-in, push/email notifications, and user-configurable scan-retention controls.
-- Public browser-store releases; the extension packages are currently for local development and review.
+- **Scan-retention controls:** implemented in Account & Settings → Privacy. Choose 30, 90, 180, or 365 days, or keep scans until you delete them. Expired scans and their evidence are cleaned up daily by each API deployment. Apply the database migration with `cd backend && alembic upgrade head` before deploying this change.
+- **Live/community threat alerts and administrator console:** not implemented. The Threat Center currently contains safety guides only; it must not be presented as a live threat feed.
+- **Audio/video checks:** not implemented. The configured media adapter currently applies to supported image checks; audio/video requires a separate provider and an explicit upload, privacy, and result contract.
+- **Social sign-in:** not implemented. Google/Apple OAuth needs registered client credentials, callback URLs, and provider review/configuration.
+- **Push/email notifications:** not implemented beyond password-reset email. Push delivery requires platform credentials and user opt-in; email alerts require SMTP configuration and notification preferences.
+- **Browser-store publication:** extension builds are available for review, but publication requires store-owner accounts, listing assets, privacy disclosures, and store approval. Build locally with `npm run build:extension`.
+
+These deployment and provider items are not claimed as complete by the local application. See [`docs/phase2-integrations.md`](docs/phase2-integrations.md) for provider setup and limitations.
 
 ## Developer commands
 
