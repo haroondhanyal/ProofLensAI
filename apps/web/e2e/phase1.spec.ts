@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures/ui-test';
 
 const unique = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const email = `phase1-${unique}@example.com`;
@@ -6,9 +6,11 @@ const password = 'Phase1-safe-password-123';
 
 test('signup, analyze, filter history, share and revoke, then delete account', async ({ page }) => {
   await page.goto('/');
-  await page.getByLabel('Your name').fill('Phase One');
+  await page.getByRole('button', { name: /Create account/ }).first().click();
+  await page.getByRole('textbox', { name: 'Full name' }).fill('Phase One');
   await page.getByLabel('Email address').fill(email);
-  await page.getByLabel('Password').fill(password);
+  await page.locator('input[placeholder="At least 10 characters"]').fill(password);
+  await page.locator('input[placeholder="Repeat your password"]').fill(password);
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page.getByRole('heading', { name: 'Your digital safety, at a glance.' })).toBeVisible();
 
@@ -21,15 +23,15 @@ test('signup, analyze, filter history, share and revoke, then delete account', a
 
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Scan history' })).toBeVisible();
-  await page.getByLabel('Type', { exact: true }).selectOption('URL');
-  await page.getByLabel('Search checks').fill('example.com');
-  await expect(page.getByText(/URL check/)).toBeVisible();
+  await page.getByLabel('Filter by check type').selectOption('URL');
+  await page.getByPlaceholder('Search your checks…').fill('example.com');
+  await expect(page.getByRole('heading', { name: 'URL assessment' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await page.getByLabel('Current password').fill(password);
+  await page.getByRole('button', { name: /Account & settings/ }).click();
+  await page.getByLabel('Confirm current password').fill(password);
   await page.getByRole('button', { name: 'Delete account' }).click();
   await page.getByRole('button', { name: 'Permanently delete my account' }).click();
-  await expect(page.getByRole('heading', { name: 'Create your workspace' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Check before you trust/ })).toBeVisible();
 });
 
 test('login and request a privacy-preserving password reset', async ({ page }) => {
@@ -43,11 +45,12 @@ test('login and request a privacy-preserving password reset', async ({ page }) =
 
 test('demo workspace is labeled synthetic and sample records are read-only', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Explore sample workspace' }).click();
-  await expect(page.getByText('SAMPLE DATA · NOT LIVE ANALYSIS')).toBeVisible();
-  await expect(page.getByText('SAMPLE REPORT · NOT LIVE')).toBeVisible();
-  await expect(page.getByText('DEMO-URL-SAFE')).toBeVisible();
-  await expect(page.getByText('saving, sharing and deleting are disabled')).toBeVisible();
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: /Explore sample workspace/ }).click();
+  await expect(page.getByText('Sample reports only')).toBeVisible();
+  await page.getByRole('button', { name: /URL · EXAMPLE/ }).first().click();
+  await expect(page.getByText('SAMPLE REPORT · NOT A LIVE CHECK')).toBeVisible();
+  await expect(page.getByText(/Sample report only: saving, sharing, and deleting are disabled/)).toBeVisible();
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await expect(page.getByText('DEMO-MESSAGE')).toBeVisible();
 });

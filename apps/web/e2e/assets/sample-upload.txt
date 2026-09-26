@@ -1,0 +1,2 @@
+ProofLens QA benign upload fixture.
+This file contains no executable content and is used to verify file upload handling.

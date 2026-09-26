@@ -2,12 +2,23 @@
   "name": "prooflens-web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test:e2e": "playwright test"
+    "bdd:generate": "bddgen --config playwright.config.ts",
+    "test:e2e": "npm run bdd:generate && playwright test",
+    "test:ui": "playwright test --project=chromium e2e/phase1.spec.ts e2e/ui.spec.ts e2e/ui-matrix.spec.ts",
+    "test:api": "playwright test --project=chromium e2e/api.spec.ts e2e/api-matrix.spec.ts",
+    "test:bdd": "npm run bdd:generate && playwright test --project=bdd",
+    "test:system": "playwright test --project=chromium e2e/system-integration.spec.ts",
+    "test:k6": "mkdir -p reports; rm -f reports/k6-summary.json reports/k6-timeseries.json reports/k6-report.html reports/k6-cases-report.html; k6_status=0; docker run --rm -e API_BASE_URL -e K6_VUS -e K6_DURATION -v \"$PWD:/work\" -w /work grafana/k6:1.6.1 run --out json=reports/k6-timeseries.json performance/k6/prooflens-matrix.js || k6_status=$?; if [ -f reports/k6-summary.json ]; then node scripts/build-k6-report.mjs && node scripts/brand-generated-reports.mjs || exit $?; else echo \"No K6 results were produced; no K6 report was generated.\"; fi; exit \"$k6_status\"",
+    "allure:generate": "allure generate reports/allure-results --clean -o reports/allure-report && node scripts/brand-allure-report.mjs",
+    "test:qa": "node scripts/run-qa-automation.mjs",
+    "report:build": "node scripts/build-automation-reports.mjs && node scripts/build-k6-report.mjs && node scripts/brand-generated-reports.mjs",
+    "test:automation": "npm run test:qa"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -16,12 +27,16 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "allure-commandline": "^2.46.1",
+    "allure-playwright": "^3.12.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "playwright-bdd": "^9.2.1",
     "typescript": "^5"
   }
 }
