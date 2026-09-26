@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
+from typing import Literal
 
 
 class RegisterRequest(BaseModel):
@@ -14,6 +15,14 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class MobileRefreshRequest(BaseModel):
+    refresh_token: str = Field(min_length=30, max_length=2048)
+
+
+class MobileLogoutRequest(BaseModel):
+    refresh_token: str | None = Field(default=None, max_length=2048)
+
+
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
@@ -26,6 +35,10 @@ class PasswordResetConfirm(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     display_name: str = Field(min_length=1, max_length=120)
     phone: str | None = Field(default=None, max_length=40)
+
+
+class ScanRetentionUpdateRequest(BaseModel):
+    scan_retention_days: Literal[30, 90, 180, 365] | None
 
 
 class PasswordChangeRequest(BaseModel):

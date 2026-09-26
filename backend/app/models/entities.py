@@ -20,6 +20,7 @@ class User(Base):
     avatar_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(256))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    scan_retention_days: Mapped[int | None] = mapped_column(Integer, default=365, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     scans: Mapped[list["Scan"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 

@@ -15,6 +15,58 @@ This is the web project branch (`main`). It contains the Next.js web app, FastAP
 - A browser extension for Chrome, Edge, and Firefox that hands a user-selected page, link, or text to the web workspace.
 - Fictional, read-only sample reports through **Explore sample workspace** on the sign-in screen.
 
+## QA automation and reports
+
+The complete QA profile is designed to execute **760 named cases**:
+
+| Suite | Cases | Coverage |
+| --- | ---: | --- |
+| UI | 265 | Smoke, regression, all nine live analyzer modes, account and avatar settings, report lifecycle, themes, and navigation |
+| API | 125 | Authentication, mobile token rotation, password recovery, access control, profiles, avatars, analyzer validation, history, sharing, and exports |
+| BDD | 120 | Real Gherkin `Scenario Outline` examples run through Playwright via `playwright-bdd` |
+| k6 | 150 | Authenticated feature traffic across account, privacy, mobile sessions, all analyzer endpoints, history, reports, and avatars; 10 VUs for the configured duration |
+| System + integration | 100 | Five themes × ten viewports × landing/sample workspaces, with API health and layout assertions |
+
+The test data uses Faker generated identities and `.example` email addresses. API created QA users and their scans are removed in suite teardown. Safe local fixtures are in `apps/web/e2e/assets/`; no live phishing or malware sample is included. Screenshots and videos are captured for browser suites, and Playwright traces are kept for failures. k6 creates one disposable ProofLens account, exercises authenticated endpoints and removes its account and generated scan data in teardown; its 150 named cases are imported into the same Allure run with request results attached.
+
+### Start and run QA
+
+Use Node 24.6 (`nvm use` at the repository root), install npm dependencies, and start the local API in test mode so loopback QA workers share the higher test-only rate limits. From `backend`, run `APP_ENV=test uvicorn app.main:app --reload`. The Playwright config starts the web app at port 3001 if it is not already running. Copy the QA environment template only if you want local overrides:
+
+```sh
+cp apps/web/.env.qa.example apps/web/.env.qa
+```
+
+The checked-in template contains local QA URLs and performance settings only; do not put provider keys or production credentials in it. Run all suites and reports:
+
+```sh
+npm run test:qa
+```
+
+Docker Desktop must be running and able to use the `grafana/k6:1.6.1` image. The API must be reachable at the QA URL. The runner generates BDD tests, runs 610 Playwright cases and 150 k6 cases, imports results into Allure, and builds ProofLens branded grouped reports.
+
+### Latest report pages
+
+The screenshots below are captured from the current generated reports. They are also served as static web assets from `apps/web/public/report-screenshots/`.
+
+**Allure overview — 760 passing cases across five suites**
+
+![Current Allure QA report overview](apps/web/public/report-screenshots/allure-overview.png)
+
+**K6 performance overview — 150 cases, workload summary, latency profile, and all 19 feature families**
+
+![Current K6 performance overview](apps/web/public/report-screenshots/k6-overview.png)
+
+**K6 case list — filter all 150 cases and expand a case ID to inspect its request, expected HTTP status, attempts, check pass rate, and final result**
+
+![Current K6 case details with an expanded case](apps/web/public/report-screenshots/k6-cases.png)
+
+The current K6 run reports 150/150 cases passed, 150/150 checks passed, 156 requests, 4.58 requests/second, 10 peak virtual users over 30 seconds, 31.2 ms median latency, 143 ms p90, 270.4 ms p95, 160.9 ms average latency, and 5,289.6 ms maximum latency. The case details page shows the full list and provides search, feature/status filters, and an expandable result summary for each case.
+
+Allure suite totals are UI 265, K6 150, API 125, BDD 120, and System + Integration 100. The generated local reports are `apps/web/reports/allure-report/index.html` (full Allure), `apps/web/reports/k6-report.html` (K6 overview), and `apps/web/reports/k6-cases-report.html` (case list). These report outputs are generated locally and are not committed; rebuild them with the QA commands below.
+
+Run a single suite with `npm run test:ui`, `npm run test:api`, `npm run test:bdd`, `npm run test:system`, or `npm run test:k6`. These commands run from the repository root. k6's 10 VU, 30 second default is a local performance smoke profile; its thresholds are not a production capacity certification. Override the VU count and duration in the ignored `apps/web/.env.qa` file for a deliberately sized QA run.
+
 ## Requirements
 
 - Node.js 22.13+ or 24.3+
@@ -48,9 +100,11 @@ npm install
 npm run dev:web
 ```
 
-Open http://localhost:3000. You can register/sign in for live API checks, or choose **Explore sample workspace** for fictional read-only example reports. A live scan requires a running API.
+Open http://localhost:3001. You can register/sign in for live API checks, or choose **Explore sample workspace** for fictional read-only example reports. A live scan requires a running API.
 
 ## Browser extension (Phase 3)
+
+**Phase 3 implementation is complete:** the extension supports current-page checks, selected links and text, and opens the existing ProofLens web flow/API after the user reviews and submits the handoff. Chrome/Edge and Firefox packages build locally. Public store submission is a release task and still needs publisher accounts and store review.
 
 Build both browser packages from the repository root:
 
@@ -70,11 +124,16 @@ The API provides session authentication, scan endpoints, history, private report
 - [`docs/security.md`](docs/security.md) — security model and data handling.
 - [`apps/extension/README.md`](apps/extension/README.md) — browser package setup.
 
-## Scope that remains future work
+## Completion status and deployment-dependent work
 
-- Live/community threat alerts and an administrator threat-monitoring console.
-- Video and audio analysis, social sign-in, push/email notifications, and user-configurable scan-retention controls.
-- Public browser-store releases; the extension packages are currently for local development and review.
+- **Scan-retention controls:** implemented in Account & Settings → Privacy. Choose 30, 90, 180, or 365 days, or keep scans until you delete them. Expired scans and their evidence are cleaned up daily by each API deployment. Apply the database migration with `cd backend && alembic upgrade head` before deploying this change.
+- **Live/community threat alerts and administrator console:** not implemented. The Threat Center currently contains safety guides only; it must not be presented as a live threat feed.
+- **Audio/video checks:** not implemented. The configured media adapter currently applies to supported image checks; audio/video requires a separate provider and an explicit upload, privacy, and result contract.
+- **Social sign-in:** not implemented. Google/Apple OAuth needs registered client credentials, callback URLs, and provider review/configuration.
+- **Push/email notifications:** not implemented beyond password-reset email. Push delivery requires platform credentials and user opt-in; email alerts require SMTP configuration and notification preferences.
+- **Browser-store publication:** extension builds are available for review, but publication requires store-owner accounts, listing assets, privacy disclosures, and store approval. Build locally with `npm run build:extension`.
+
+These deployment and provider items are not claimed as complete by the local application. See [`docs/phase2-integrations.md`](docs/phase2-integrations.md) for provider setup and limitations.
 
 ## Developer commands
 

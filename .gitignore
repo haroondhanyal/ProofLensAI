@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+!.env.qa.example
 !Mobile APP/.env.mobile.example
 node_modules/
 *.tsbuildinfo
@@ -16,6 +17,8 @@ playwright-report/
 test-results/
 apps/web/playwright-report/
 apps/web/test-results/
+apps/web/reports/
+apps/web/.bdd-generated/
 apps/extension/dist/
 backend/uploads/
 .DS_Store

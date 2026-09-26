@@ -34,7 +34,7 @@ def analyze_store(url: str, context: str = "", fetch_page: bool = False) -> tupl
                 if len(fetched_links) >= 2: break
                 marker = (link.get("href", "") + " " + link.get("text", "")).lower()
                 if not any(hint in marker for hint in hints): continue
-                from urllib.parse import urljoin, urlsplit
+                from urllib.parse import urljoin
                 candidate = urljoin(page["final_url"], link.get("href", ""))
                 if urlsplit(candidate).hostname == page.get("hostname"):
                     extra = fetch_public_page(candidate)

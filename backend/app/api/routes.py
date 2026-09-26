@@ -16,7 +16,7 @@ from app.analyzers.url_analyzer import analyze_url
 from app.db.session import get_db
 from app.models import AuditLog, AuthSession, Evidence, PasswordResetToken, Scan, User
 from app.core.config import settings
-from app.schemas import AccountDeleteRequest, AnalyzeRequest, ClaimAnalyzeRequest, LoginRequest, PasswordChangeRequest, PasswordResetConfirm, PasswordResetRequest, ProfileUpdateRequest, ProductAnalyzeRequest, RegisterRequest, StoreAnalyzeRequest
+from app.schemas import AccountDeleteRequest, AnalyzeRequest, ClaimAnalyzeRequest, LoginRequest, MobileLogoutRequest, MobileRefreshRequest, PasswordChangeRequest, PasswordResetConfirm, PasswordResetRequest, ProfileUpdateRequest, ProductAnalyzeRequest, RegisterRequest, ScanRetentionUpdateRequest, StoreAnalyzeRequest
 from app.security import ALGORITHM, create_access_token, create_refresh_token, current_user, digest_token, hash_password, verify_password
 from app.services.risk_engine import Finding, score_findings
 from app.providers.ocr import extract_text
@@ -51,6 +51,7 @@ def _scan_payload(scan: Scan) -> dict:
         "evidence": [{"title": item.title, "description": item.description, "severity": item.severity, "source": item.source} for item in scan.evidence],
         "recommendations": scan.recommendations,
         "is_saved": scan.is_saved,
+        "is_shared": bool(scan.share_token),
         "analysis_meta": scan.analysis_meta,
         "status": scan.status,
         "created_at": scan.created_at,
@@ -78,13 +79,20 @@ def _audit(db: Session, user_id: str | None, event: str, resource_id: str | None
     db.add(AuditLog(actor_user_id=user_id, event=event, resource_id=resource_id, metadata_json={}))
 
 
-def _set_session_cookie(response: Response, user_id: str, db: Session):
+def _set_session_cookie(response: Response, user_id: str, db: Session) -> tuple[str, str]:
     jti = secrets.token_urlsafe(32)
     expires = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     db.add(AuthSession(user_id=user_id, refresh_jti_hash=digest_token(jti), expires_at=expires))
     db.commit()
-    response.set_cookie("prooflens_access", create_access_token(user_id), httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax", path="/api/v1", max_age=settings.access_token_expire_minutes * 60)
-    response.set_cookie("prooflens_refresh", create_refresh_token(user_id, jti), httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax", path="/api/v1/auth", max_age=settings.refresh_token_expire_days * 86400)
+    access_token = create_access_token(user_id)
+    refresh_token = create_refresh_token(user_id, jti)
+    response.set_cookie("prooflens_access", access_token, httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax", path="/api/v1", max_age=settings.access_token_expire_minutes * 60)
+    response.set_cookie("prooflens_refresh", refresh_token, httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax", path="/api/v1/auth", max_age=settings.refresh_token_expire_days * 86400)
+    return access_token, refresh_token
+
+
+def _mobile_auth_payload(user: User, access_token: str, refresh_token: str) -> dict:
+    return {"success": True, "data": {"user": {"id": user.id, "email": user.email, "display_name": user.display_name, "phone": user.phone}, "access_token": access_token, "refresh_token": refresh_token}, "request_id": str(uuid.uuid4())}
 
 
 @router.post("/auth/register", status_code=201)
@@ -111,6 +119,81 @@ def login(body: LoginRequest, response: Response, db: Session = Depends(get_db))
     _audit(db, user.id, "auth.login")
     db.commit()
     return {"success": True, "data": {"user": {"id": user.id, "email": user.email, "display_name": user.display_name, "phone": user.phone}}, "request_id": str(uuid.uuid4())}
+
+
+@router.post("/auth/mobile/register", status_code=201)
+def mobile_register(body: RegisterRequest, response: Response, db: Session = Depends(get_db)):
+    email = body.email.lower()
+    if db.query(User).filter_by(email=email).first():
+        raise HTTPException(409, "An account with this email already exists.")
+    user = User(email=email, display_name=body.display_name.strip(), phone=(body.phone or "").strip() or None, password_hash=hash_password(body.password))
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    access_token, refresh_token = _set_session_cookie(response, user.id, db)
+    _audit(db, user.id, "account.registered")
+    _audit(db, user.id, "auth.mobile_session_created")
+    db.commit()
+    return _mobile_auth_payload(user, access_token, refresh_token)
+
+
+@router.post("/auth/mobile/login")
+def mobile_login(body: LoginRequest, response: Response, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(email=body.email.lower()).first()
+    if not user or not user.is_active or not verify_password(body.password, user.password_hash):
+        raise HTTPException(401, "Email or password is incorrect.")
+    access_token, refresh_token = _set_session_cookie(response, user.id, db)
+    _audit(db, user.id, "auth.login")
+    _audit(db, user.id, "auth.mobile_session_created")
+    db.commit()
+    return _mobile_auth_payload(user, access_token, refresh_token)
+
+
+@router.post("/auth/mobile/refresh")
+def mobile_refresh(body: MobileRefreshRequest, response: Response, db: Session = Depends(get_db)):
+    try:
+        payload = jwt.decode(body.refresh_token, settings.jwt_secret, algorithms=[ALGORITHM])
+    except JWTError as exc:
+        raise HTTPException(401, "Refresh session is invalid or expired.") from exc
+    user_id, jti = payload.get("sub"), payload.get("jti")
+    if payload.get("type") != "refresh" or not user_id or not jti:
+        raise HTTPException(401, "Refresh session is invalid.")
+    session = db.query(AuthSession).filter_by(user_id=user_id, refresh_jti_hash=digest_token(jti), revoked_at=None).first()
+    if not session or _is_expired(session.expires_at):
+        raise HTTPException(401, "Refresh session is invalid or expired.")
+    user = db.get(User, user_id)
+    if not user or not user.is_active:
+        raise HTTPException(401, "Account unavailable.")
+    new_jti = secrets.token_urlsafe(32)
+    session.refresh_jti_hash = digest_token(new_jti)
+    session.expires_at = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    access_token = create_access_token(user_id)
+    refresh_token = create_refresh_token(user_id, new_jti)
+    response.set_cookie("prooflens_access", access_token, httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax", path="/api/v1", max_age=settings.access_token_expire_minutes * 60)
+    response.set_cookie("prooflens_refresh", refresh_token, httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax", path="/api/v1/auth", max_age=settings.refresh_token_expire_days * 86400)
+    _audit(db, user_id, "auth.mobile_session_refreshed")
+    db.commit()
+    return {"success": True, "data": {"access_token": access_token, "refresh_token": refresh_token}, "request_id": str(uuid.uuid4())}
+
+
+@router.post("/auth/mobile/logout")
+def mobile_logout(body: MobileLogoutRequest, request: Request, response: Response, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    if body.refresh_token:
+        try:
+            payload = jwt.decode(body.refresh_token, settings.jwt_secret, algorithms=[ALGORITHM])
+            jti = payload.get("jti")
+            if payload.get("sub") == user.id and payload.get("type") == "refresh" and jti:
+                session = db.query(AuthSession).filter_by(user_id=user.id, refresh_jti_hash=digest_token(jti), revoked_at=None).first()
+                if session:
+                    session.revoked_at = datetime.now(timezone.utc)
+        except JWTError:
+            pass
+    _revoke_refresh_cookie(request, db, user.id)
+    _audit(db, user.id, "auth.logout")
+    db.commit()
+    response.delete_cookie("prooflens_access", path="/api/v1", httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax")
+    response.delete_cookie("prooflens_refresh", path="/api/v1/auth", httponly=True, secure=settings.app_env not in {"development", "test"}, samesite="lax")
+    return {"success": True, "data": {"message": "Session ended."}, "request_id": str(uuid.uuid4())}
 
 
 @router.post("/auth/logout")
@@ -231,6 +314,19 @@ def update_profile(body: ProfileUpdateRequest, db: Session = Depends(get_db), us
     _audit(db, user.id, "account.profile_updated")
     db.commit()
     return {"success": True, "data": {"id": user.id, "email": user.email, "display_name": user.display_name, "phone": user.phone, "avatar_url": "/api/v1/auth/me/avatar" if user.avatar_data else None}, "request_id": str(uuid.uuid4())}
+
+
+@router.get("/auth/me/privacy")
+def get_privacy_settings(user: User = Depends(current_user)):
+    return {"success": True, "data": {"scan_retention_days": user.scan_retention_days}, "request_id": str(uuid.uuid4())}
+
+
+@router.patch("/auth/me/privacy")
+def update_privacy_settings(body: ScanRetentionUpdateRequest, db: Session = Depends(get_db), user: User = Depends(current_user)):
+    user.scan_retention_days = body.scan_retention_days
+    _audit(db, user.id, "account.scan_retention_updated")
+    db.commit()
+    return {"success": True, "data": {"scan_retention_days": user.scan_retention_days}, "request_id": str(uuid.uuid4())}
 
 
 @router.get("/auth/me/avatar")

@@ -3,6 +3,8 @@
 All routes use `/api/v1`. Authentication uses a short-lived HttpOnly JWT cookie. In local development use the same `localhost` host for the web app and API so the browser sends the cookie.
 
 - `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/refresh`, `GET /auth/me`, `DELETE /auth/me`
+- Native mobile sessions: `POST /auth/mobile/register`, `POST /auth/mobile/login` return short-lived access and rotating refresh tokens; `POST /auth/mobile/refresh` rotates them, and `POST /auth/mobile/logout` revokes the refresh session. Mobile clients must store tokens in OS-protected storage and send access tokens as Bearer credentials.
+- `GET /auth/me/privacy`, `PATCH /auth/me/privacy` (set scan retention to 30, 90, 180, or 365 days; `null` keeps scans until manually deleted)
 - Password reset: `POST /auth/forgot-password`, `POST /auth/reset-password` (configure SMTP for email delivery).
 - `POST /analyze/url`, `POST /analyze/message`
 - `POST /analyze/file` (PDF, DOCX, XLSX, PPTX, ZIP, text, selected executable metadata; bounded and static only)

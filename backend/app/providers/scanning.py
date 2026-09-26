@@ -53,7 +53,7 @@ def scan_with_antivirus(blob: bytes) -> dict:
     else:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         connect_address = settings.antivirus_socket
-    client.settimeout(30.0)
+    client.settimeout(10.0)
     try:
         client.connect(connect_address)
         client.sendall(b"zINSTREAM\0")
@@ -83,7 +83,7 @@ def _scan_with_clamscan(blob: bytes) -> dict:
         return {"status": "not_configured"}
     try:
         result = subprocess.run([binary, "--no-summary", "-"], input=blob, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, timeout=60, check=False)
+                                stderr=subprocess.STDOUT, timeout=5, check=False)
     except subprocess.TimeoutExpired:
         return {"status": "unavailable", "scanner": "ClamAV clamscan", "detail": "Local one-shot scan timed out."}
     except OSError:
